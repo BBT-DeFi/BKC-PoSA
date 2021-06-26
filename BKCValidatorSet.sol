@@ -2,10 +2,12 @@ pragma solidity <=0.8.6;
 
 import "./System.sol";
 import "./Interface/IValidator.sol";
+import "./Interface/IBond.sol";
+import "./ValidatorPool.sol";
 
 /*[
-    ["0x70F657164e5b75689b64B7fd1fA275F334f28e18","0x5CF5d69852151952b1b1faF04d9B6140dAe30aFD","0x022180D9cF057A1d4bda8AeF1c581F0F17c1745c",63306535440133,false],
-    ["0x2465176C461AfB316ebc773C61fAEe85A6515DAA", "0x14cC4EcB0DA0B7b0281B36081912A6AF07F779e9", "0x99CF09e8f5F8Dc3465c834fbf9154C2050075203",  64328738321847, false]
+    ["0x70F657164e5b75689b64B7fd1fA275F334f28e18","35481719561823448621","BondStatus.UNBONDED",63306535440133,false],
+    ["0x2465176C461AfB316ebc773C61fAEe85A6515DAA", "35481719561823448621", "BondStatus.UNBONDED",  64328738321847, false]
   ]
 */
 /*
@@ -21,23 +23,50 @@ contract BKCValidatorSet is System, IValidator {
 
     Validator[] private tmpValidatorSet;
 
-    function init() external override onlyNotInit {
+    uint256 public endTime;
+
+    ValidatorPool private vldpool;
+
+    modifier onlyAfterEndTime() {
+        require(block.timestamp >= endTime);
+        _;
+    }
+
+    modifier onlyValidatorInValidatorSet(address concensusAddress) {
+        require(
+            currentValidatorSetMap[concensusAddress] > 0,
+            "not allow for non-active validator"
+        );
+        _;
+    }
+
+    function updateEndTime() private {
+        endTime += unbondingPeriod;
+    }
+
+    function init(address validatorPoolAddress) external onlyNotInit {
         Validator memory firstValidator = Validator(
-            0x295e26495CEF6F69dFA69911d9D8e4F3bBadB89B,
-            // payable(0x812625152e78C2a7027B9767cC5ab6Fc4B3D2e28),
-            // 0xF5cACa6d5fCb6F819147892191716cf443D224be,
-            // 64619916293869,
-            // false
+            0xCA35b7d915458EF540aDe6068dFe2F44E8fa733c,
             48648428258251948625,
-            false,
+            BondStatus.UNBONDED,
             false
         );
+        Validator memory secondValidator = Validator(
+            0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2,
+            35481719561823448621,
+            BondStatus.UNBONDED,
+            false
+        );
+
         tmpValidatorSet.push(firstValidator);
+        tmpValidatorSet.push(secondValidator);
 
         for (uint256 i = 0; i < tmpValidatorSet.length; i++) {
             currentValidatorSet.push(tmpValidatorSet[i]);
             currentValidatorSetMap[tmpValidatorSet[i].consensusAddress] = i + 1;
         }
+        vldpool = ValidatorPool(validatorPoolAddress);
+        endTime = block.timestamp + unbondingPeriod;
         alreadyInit = true;
     }
 
@@ -45,18 +74,26 @@ contract BKCValidatorSet is System, IValidator {
         return currentValidatorSet;
     }
 
+    /* TODO : need to change from inputting newValidatorSet into 
+    calculating the top validators in validator pool contract
+    */
     function updateValidatorSet(Validator[] memory newValidatorSet)
         public
         onlyInit
+        onlyAfterEndTime
+        onlyValidatorInValidatorSet(msg.sender)
     {
         for (uint256 i = 0; i < currentValidatorSet.length; i++) {
             Validator memory validator = currentValidatorSet[i];
+            vldpool.unBondValidator(validator.consensusAddress); // change the bond state to UNBONDED
             delete currentValidatorSetMap[validator.consensusAddress];
         }
         delete currentValidatorSet;
         for (uint256 i = 0; i < newValidatorSet.length; i++) {
             currentValidatorSet.push(newValidatorSet[i]);
+            vldpool.bondValidator(newValidatorSet[i].consensusAddress); // change the bond state to BONDED
             currentValidatorSetMap[newValidatorSet[i].consensusAddress] = i + 1;
         }
+        updateEndTime(); // for the next round.
     }
 }

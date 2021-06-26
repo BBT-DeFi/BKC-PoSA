@@ -7,20 +7,52 @@ import "./Interface/IDelegation.sol";
 
 contract StakePool is System, IValidator, IDelegation {
     mapping(address => DelegationObject) public ValidatorDelegation;
+    mapping(address => userDelegation) public UserDelegation;
 
-    function init() external override onlyNotInit {
+    mapping(address => uint256) public UserUnDelegateQueue;
+
+    ValidatorPool vldpool;
+
+    function init(address validatorPoolAddress) external onlyNotInit {
+        vldpool = ValidatorPool(validatorPoolAddress);
         alreadyInit = true;
     }
 
-    function delegate(address validatorConcensus, uint256 amount)
-        external
-        onlyInit
-    {
-        // TODO remove amount from msg.sender
-        ValidatorDelegation[validatorConcensus].delegateAmountOfEach[
-            msg.sender
-        ] += amount;
-        ValidatorDelegation[validatorConcensus].totalDelegation += amount;
+    function delegate(address validatorConcensus) external payable onlyInit {
+        require(
+            vldpool.validatorsMap(validatorConcensus) > 0,
+            "can't delegate to a non-validator"
+        );
+        if (UserDelegation[msg.sender].concensusAddress == validatorConcensus) {
+            // if contribute more to the same validator
+            ValidatorDelegation[validatorConcensus].delegateAmountOfEach[
+                msg.sender
+            ] += msg.value;
+            ValidatorDelegation[validatorConcensus].totalDelegation += msg
+            .value;
+            UserDelegation[msg.sender].bondedAmount += msg.value;
+        } else {
+            if (
+                UserDelegation[msg.sender].bondedAmount == 0 &&
+                UserDelegation[msg.sender].unbondingAmount == 0
+            ) {
+                // change validator
+                ValidatorDelegation[validatorConcensus].delegateAmountOfEach[
+                    msg.sender
+                ] += msg.value;
+                ValidatorDelegation[validatorConcensus].totalDelegation += msg
+                .value;
+                UserDelegation[msg.sender] = userDelegation(
+                    validatorConcensus,
+                    msg.value,
+                    0
+                );
+            } else {
+                revert(
+                    "can't make delegation to another validator when already delegated to one"
+                ); // one validator at a time.
+            }
+        }
     }
 
     function undelegate(address validatorConcensus, uint256 amount)
@@ -31,24 +63,44 @@ contract StakePool is System, IValidator, IDelegation {
             ValidatorDelegation[validatorConcensus].delegateAmountOfEach[
                 msg.sender
             ] > amount,
-            "not enough amount to undelegate"
+            "not enough amount to unbond"
         );
-        address validatorPoolAddress = address(
-            0xe2899bddFD890e320e643044c6b95B9B0b84157A
+        require(
+            UserDelegation[msg.sender].bondedAmount > amount,
+            "not enough amount to unbond"
         );
-        ValidatorPool vldpool = ValidatorPool(validatorPoolAddress);
-        Validator memory aValidator = vldpool.validators(
-            vldpool.validatorsMap(validatorConcensus) - 1
-        );
-        // address aValidatorAddress = vldpool.validators(vldpool.validatorsMap(validatorConcensus)-1).concensusAddress;
-        // Validator memory aValidatorObject = Validator(vldpool.validators(vldpool.validatorsMap(validatorConcensus)-1));
-        if (aValidator.isBond) {
-            // do logic for unbonding the delegation
+
+        uint256 index = vldpool.validatorsMap(validatorConcensus) - 1;
+        (, , BondStatus bond, ) = vldpool.validators(index);
+        if (bond == BondStatus.BONDED) {
+            ValidatorDelegation[validatorConcensus].delegateAmountOfEach[
+                msg.sender
+            ] -= amount;
+            UserDelegation[msg.sender].bondedAmount -= amount;
+            UserDelegation[msg.sender].unbondingAmount += amount;
+            UserUnDelegateQueue[msg.sender] = block.timestamp + unbondingPeriod;
         } else {
             ValidatorDelegation[validatorConcensus].delegateAmountOfEach[
                 msg.sender
             ] -= amount;
-            vldpool.validatorsMap[validatorConcensus].stakeAmount -= amount;
+            UserDelegation[msg.sender].bondedAmount -= amount;
+            payable(msg.sender).transfer(amount);
         }
+        // ValidatorDelegation[validatorConcensus].delegateAmountOfEach[msg.sender] -= amount;
+        // UserDelegation[msg.sender].bondedAmount -= amount;
+        // UserDelegation[msg.sender].unbondingAmount += amount;
+        // UserUnDelegateQueue[msg.sender] = block.timestamp + unbondingPeriod;
+    }
+
+    function removeUnbondingUserFromUnbondingQueue() external onlyInit {
+        require(
+            block.timestamp > UserUnDelegateQueue[msg.sender],
+            "unbonding still in progress"
+        );
+        delete UserUnDelegateQueue[msg.sender];
+        payable(msg.sender).transfer(
+            UserDelegation[msg.sender].unbondingAmount
+        );
+        UserDelegation[msg.sender].unbondingAmount = 0;
     }
 }

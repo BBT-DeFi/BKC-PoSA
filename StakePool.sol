@@ -95,10 +95,6 @@ contract StakePool is System, IValidator, IDelegation {
             UserDelegation[msg.sender].bondedAmount -= amount;
             payable(msg.sender).transfer(amount);
         }
-        // ValidatorDelegation[validatorConsensus].delegateAmountOfEach[msg.sender] -= amount;
-        // UserDelegation[msg.sender].bondedAmount -= amount;
-        // UserDelegation[msg.sender].unbondingAmount += amount;
-        // UserUnDelegateQueue[msg.sender] = block.timestamp + unbondingPeriod;
     }
 
     function removeUnbondingUserFromUnbondingQueue() external onlyInit {

@@ -17,7 +17,7 @@ contract ValidatorPool is System, IValidator {
     address private _BKCValidatorSetAddress;
     address private _StakePoolAddress;
 
-    uint256 constant MIN_VALIDATOR_STAKE_AMOUNT = 10000 * (10**18); // 10000 KUB
+    uint256 constant MIN_VALIDATOR_STAKE_AMOUNT = 10; //10000 * (10**18); // 10000 KUB
 
     mapping(address => uint256) public validatorUnBondQueue;
 
@@ -48,12 +48,22 @@ contract ValidatorPool is System, IValidator {
         _;
     }
 
+    modifier onlyNotBonded(address consensusAddress) {
+        require(
+            validators[validatorsMap[consensusAddress] - 1].bondStatus ==
+                BondStatus.UNBONDED,
+            "can't do operation when unbonding or bonded"
+        );
+        _;
+    }
+
     function NumberOfValidator() public view returns (uint256) {
         return validators.length;
     }
 
     function init(address BKCValidatorSetAddress, address StakePoolAddress)
         external
+        payable
         onlyNotInit
     {
         Validator memory firstValidator = Validator(
@@ -112,6 +122,7 @@ contract ValidatorPool is System, IValidator {
     function withdrawFund(address consensusAddress, uint256 amount)
         external
         onlyInit
+        onlyNotBonded(consensusAddress)
     {
         require(msg.sender == consensusAddress, "can't withdraw others' fund");
         require(
@@ -121,15 +132,24 @@ contract ValidatorPool is System, IValidator {
         );
         payable(consensusAddress).transfer(amount);
         validators[validatorsMap[consensusAddress] - 1].stakeAmount -= amount;
-        reEvaluateValidator(consensusAddress);
+        bool res = reEvaluateValidator(consensusAddress);
+        if (res) {
+            // validator still have enough
+            rePositionValidator(consensusAddress, false);
+        }
     }
 
     function validatorTopUp(address consensusAddress)
         external
         payable
         onlyInit
+        onlyNotBonded(consensusAddress)
     {
         require(msg.sender == consensusAddress, "can't top up for others");
+        require(msg.value > 0, "can't top up with 0 amount");
+        validators[validatorsMap[consensusAddress] - 1].stakeAmount += msg
+        .value;
+        rePositionValidator(consensusAddress, true);
     }
 
     function bondValidator(address consensusAddress)
@@ -235,9 +255,10 @@ contract ValidatorPool is System, IValidator {
                     new_validator.stakeAmount >
                     getTotalPower(validators[0].consensusAddress)
                 ) {
+                    // be the top
                     validators.push(new_validator);
                     for (uint256 i = validators.length - 1; i > 0; i--) {
-                        validators[i] = validators[i - 1];
+                        validators[i] = validators[i - 1]; // shift right
                         validatorsMap[validators[i].consensusAddress] = i + 1;
                     }
                     validators[0] = new_validator;
@@ -248,6 +269,7 @@ contract ValidatorPool is System, IValidator {
                         validators[validators.length - 1].consensusAddress
                     )
                 ) {
+                    // be the least
                     validators.push(new_validator);
                     validatorsMap[new_validator.consensusAddress] = validators
                     .length;
@@ -281,7 +303,105 @@ contract ValidatorPool is System, IValidator {
         }
     }
 
-    function reEvaluateValidator(address consensusAddress) private {
-        // TODO : check if the validator still has enough fund to stay as a validator.
+    function reEvaluateValidator(address consensusAddress)
+        private
+        returns (bool)
+    {
+        if (
+            validators[validatorsMap[consensusAddress] - 1].stakeAmount <
+            MIN_VALIDATOR_STAKE_AMOUNT
+        ) {
+            uint256 index = validatorsMap[consensusAddress];
+            for (uint256 i = index; i < validators.length - 1; i++) {
+                validators[i] = validators[i + 1]; // move to left
+                validatorsMap[validators[i].consensusAddress] = i + 1;
+            }
+            validators.pop();
+            delete validatorsMap[consensusAddress];
+            return false;
+        }
+        return true;
+    }
+
+    function rePositionValidator(address consensusAddress, bool operation)
+        private
+    {
+        // operation true for top up and false for withdraw
+        uint256 index = validatorsMap[consensusAddress] - 1;
+        uint256 this_totalPower = getTotalPower(consensusAddress);
+        if (operation) {
+            // top up
+            if (index == 0) {
+                return; // already the largest
+            }
+            if (
+                this_totalPower >= getTotalPower(validators[0].consensusAddress)
+            ) {
+                // become the top
+                Validator memory v = validators[index];
+                for (uint256 i = index; i > 0; i--) {
+                    validators[i] = validators[i - 1]; // shift right
+                    validatorsMap[validators[i].consensusAddress] = i + 1;
+                }
+                validators[0] = v;
+                validatorsMap[v.consensusAddress] = 1;
+                return;
+            }
+            for (uint256 i = index; i > 0; i--) {
+                // look to the left
+                if (
+                    getTotalPower(validators[i - 1].consensusAddress) >
+                    this_totalPower
+                ) {
+                    // found the should-be place
+                    Validator memory v = validators[index];
+                    for (uint256 j = index; j > i; j--) {
+                        validators[j] = validators[j - 1]; // shift right
+                        validatorsMap[validators[j].consensusAddress] = j + 1;
+                    }
+                    validators[i] = v;
+                    validatorsMap[v.consensusAddress] = i + 1;
+                    return;
+                }
+            }
+        } else {
+            // withdraw
+            if (index == validators.length) {
+                return; // already the smallest
+            }
+            if (
+                this_totalPower <=
+                getTotalPower(
+                    validators[validators.length - 1].consensusAddress
+                )
+            ) {
+                // become the least
+                Validator memory v = validators[index];
+                for (uint256 i = index; i < validators.length - 1; i++) {
+                    validators[i] = validators[i + 1]; // shift left
+                    validatorsMap[validators[i].consensusAddress] = i + 1;
+                }
+                validators[validators.length - 1] = v;
+                validatorsMap[v.consensusAddress] = validators.length;
+                return;
+            }
+            for (uint256 i = index; i < validators.length; i++) {
+                // look to the right
+                if (
+                    getTotalPower(validators[i + 1].consensusAddress) <
+                    this_totalPower
+                ) {
+                    // found the should-be place
+                    Validator memory v = validators[index];
+                    for (uint256 j = index; j < i; j++) {
+                        validators[j] = validators[j + 1]; // shift left
+                        validatorsMap[validators[j].consensusAddress] = j + 1;
+                    }
+                    validators[i] = v;
+                    validatorsMap[v.consensusAddress] = i + 1;
+                    return;
+                }
+            }
+        }
     }
 }

@@ -21,6 +21,9 @@ contract BKCValidatorSet is System, IValidator {
     Validator[] public currentValidatorSet; // the array holding the validator structs
     mapping(address => uint256) public currentValidatorSetMap; // map validator's consensus address to the position in the array
 
+    // mapping(uint => bool) private alreadyIn;
+    // uint[] private powers;
+
     Validator[] private tmpValidatorSet;
 
     uint256 public endTime;
@@ -77,8 +80,34 @@ contract BKCValidatorSet is System, IValidator {
             Validator memory validator = currentValidatorSet[i];
             vldpool.unBondValidator(validator.consensusAddress); // change the bond state to UNBONDED
             delete currentValidatorSetMap[validator.consensusAddress];
+
+            //delete alreadyIn[i];
         }
         delete currentValidatorSet;
+
+        //delete powers;
+
+        //  change to update validator by choosing the maximum number_of_validators from the pool instead of constant sorting.
+        // uint len = vldpool.NumberOfValidator();
+        // for (uint j = 0; j < len; j++){
+        //     (address a,,,) = vldpool.validators(j);
+        //     uint power = vldpool.getTotalPower(a);
+        //     powers.push(power);
+        // }
+        // for(uint i = 0; i < number_of_validators; i++){
+        //     uint max_power = 0;
+        //     uint max_index = 0;
+        //     for (uint j = 0; j < len; j++){
+        //         if(powers[j] > max_power && !alreadyIn[j]){
+        //             max_power = powers[j];
+        //             max_index = j;
+        //         }
+        //     }
+        //     alreadyIn[max_index] = true;
+        //     (address a, uint256 stake, BondStatus b, bool isJail) = vldpool.validators(max_index);
+        //     currentValidatorSet.push(Validator(a,stake,b,isJail));
+        //     currentValidatorSetMap[a] = i+1;
+        // }
 
         uint256 j = 0;
 

@@ -21,6 +21,9 @@ contract BKCValidatorSet is System, IValidator {
     Validator[] public currentValidatorSet; // the array holding the validator structs
     mapping(address => uint256) public currentValidatorSetMap; // map validator's consensus address to the position in the array
 
+    mapping(uint256 => bool) private alreadyIn;
+    uint256[] private powers;
+
     Validator[] private tmpValidatorSet;
 
     uint256 public endTime;
@@ -77,22 +80,48 @@ contract BKCValidatorSet is System, IValidator {
             Validator memory validator = currentValidatorSet[i];
             vldpool.unBondValidator(validator.consensusAddress); // change the bond state to UNBONDED
             delete currentValidatorSetMap[validator.consensusAddress];
+
+            delete alreadyIn[i];
         }
         delete currentValidatorSet;
 
-        uint256 j = 0;
+        delete powers;
 
-        for (uint256 i = 0; i < number_of_validators; i++) {
-            (address a, uint256 stake, BondStatus b, bool isJail) = vldpool
-            .validators(i);
-            if (!isJail) {
-                Validator memory v = Validator(a, stake, b, isJail);
-                currentValidatorSet.push(v);
-                vldpool.bondValidator(v.consensusAddress); // change the bond state to BONDED
-                currentValidatorSetMap[v.consensusAddress] = j + 1;
-                j++;
-            }
+        // TODO : change to update validator by choosing the maximum number_of_validators from the pool instead of constant sorting.
+        uint256 len = vldpool.NumberOfValidator();
+        for (uint256 j = 0; j < len; j++) {
+            (address a, , , ) = vldpool.validators(j);
+            uint256 power = vldpool.getTotalPower(a);
+            powers.push(power);
         }
+        for (uint256 i = 0; i < number_of_validators; i++) {
+            uint256 max_power = 0;
+            uint256 max_index = 0;
+            for (uint256 j = 0; j < len; j++) {
+                if (powers[j] > max_power && !alreadyIn[j]) {
+                    max_power = powers[j];
+                    max_index = j;
+                }
+            }
+            alreadyIn[max_index] = true;
+            (address a, uint256 stake, BondStatus b, bool isJail) = vldpool
+            .validators(max_index);
+            currentValidatorSet.push(Validator(a, stake, b, isJail));
+            currentValidatorSetMap[a] = i + 1;
+        }
+
+        // uint j = 0;
+
+        // for(uint i = 0; i < number_of_validators; i++){
+        //     (address a, uint stake, BondStatus b, bool isJail) = vldpool.validators(i);
+        //     if (!isJail){
+        //         Validator memory v = Validator(a,stake,b,isJail);
+        //         currentValidatorSet.push(v);
+        //         vldpool.bondValidator(v.consensusAddress); // change the bond state to BONDED
+        //         currentValidatorSetMap[v.consensusAddress] = j+1;
+        //         j++;
+        //     }
+        // }
         updateEndTime(); // for the next round.
     }
 }

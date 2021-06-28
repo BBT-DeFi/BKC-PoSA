@@ -40,7 +40,7 @@ contract ValidatorPool is System, IValidator {
         _;
     }
 
-    modifier onlyBCKValidatorSetContract() {
+    modifier onlyBKCValidatorSetContract() {
         require(
             msg.sender == _BKCValidatorSetAddress,
             "can only be called from BKCValidatorSet Contract"
@@ -54,6 +54,11 @@ contract ValidatorPool is System, IValidator {
                 BondStatus.UNBONDED,
             "can't do operation when unbonding or bonded"
         );
+        _;
+    }
+
+    modifier onlyStakePoolContractAndThisContract {
+        require(msg.sender == address(this) || msg.sender == _StakePoolAddress);
         _;
     }
 
@@ -109,12 +114,25 @@ contract ValidatorPool is System, IValidator {
         _BKCValidatorSetAddress = BKCValidatorSetAddress;
         _StakePoolAddress = StakePoolAddress;
 
-        addValidatorToSortedList(firstValidator);
-        addValidatorToSortedList(secondValidator);
-        addValidatorToSortedList(thirdValidator);
-        addValidatorToSortedList(fourthValidator);
-        addValidatorToSortedList(fifthValidator);
-        addValidatorToSortedList(sixthValidator);
+        validators.push(firstValidator);
+        validatorsMap[firstValidator.consensusAddress] = 1;
+        validators.push(secondValidator);
+        validatorsMap[secondValidator.consensusAddress] = 2;
+        validators.push(thirdValidator);
+        validatorsMap[thirdValidator.consensusAddress] = 3;
+        validators.push(fourthValidator);
+        validatorsMap[fourthValidator.consensusAddress] = 4;
+        validators.push(fifthValidator);
+        validatorsMap[fifthValidator.consensusAddress] = 5;
+        validators.push(sixthValidator);
+        validatorsMap[sixthValidator.consensusAddress] = 6;
+
+        // addValidatorToSortedList(firstValidator);
+        // addValidatorToSortedList(secondValidator);
+        // addValidatorToSortedList(thirdValidator);
+        // addValidatorToSortedList(fourthValidator);
+        // addValidatorToSortedList(fifthValidator);
+        // addValidatorToSortedList(sixthValidator);
 
         alreadyInit = true;
     }
@@ -135,7 +153,7 @@ contract ValidatorPool is System, IValidator {
         bool res = reEvaluateValidator(consensusAddress);
         if (res) {
             // validator still have enough
-            rePositionValidator(consensusAddress, false);
+            //rePositionValidator(consensusAddress, false);
         }
     }
 
@@ -149,13 +167,13 @@ contract ValidatorPool is System, IValidator {
         require(msg.value > 0, "can't top up with 0 amount");
         validators[validatorsMap[consensusAddress] - 1].stakeAmount += msg
         .value;
-        rePositionValidator(consensusAddress, true);
+        //rePositionValidator(consensusAddress, true);
     }
 
     function bondValidator(address consensusAddress)
         external
         onlyInit
-        onlyBCKValidatorSetContract
+        onlyBKCValidatorSetContract
     {
         validators[validatorsMap[consensusAddress] - 1].bondStatus = BondStatus
         .BONDED;
@@ -164,7 +182,7 @@ contract ValidatorPool is System, IValidator {
     function unBondValidator(address consensusAddress)
         external
         onlyInit
-        onlyBCKValidatorSetContract
+        onlyBKCValidatorSetContract
     {
         validators[validatorsMap[consensusAddress] - 1].bondStatus = BondStatus
         .UNBONDING;
@@ -211,7 +229,8 @@ contract ValidatorPool is System, IValidator {
             msg.value > MIN_VALIDATOR_STAKE_AMOUNT,
             "can't register to be a validator not enough staking amount sent"
         );
-        addValidatorToSortedList(
+        //addValidatorToSortedList(Validator(msg.sender, msg.value, BondStatus.UNBONDED, false));
+        validators.push(
             Validator(msg.sender, msg.value, BondStatus.UNBONDED, false)
         );
         validatorsMap[msg.sender] = validators.length;
@@ -313,9 +332,13 @@ contract ValidatorPool is System, IValidator {
         ) {
             uint256 index = validatorsMap[consensusAddress];
             for (uint256 i = index; i < validators.length - 1; i++) {
-                validators[i] = validators[i + 1]; // move to left
+                validators[i] = validators[i + 1]; // shift left
                 validatorsMap[validators[i].consensusAddress] = i + 1;
             }
+            payable(consensusAddress).transfer(
+                validators[validatorsMap[consensusAddress] - 1].stakeAmount
+            );
+            // TODO : deal with the delegation of this validator.
             validators.pop();
             delete validatorsMap[consensusAddress];
             return false;
@@ -324,7 +347,8 @@ contract ValidatorPool is System, IValidator {
     }
 
     function rePositionValidator(address consensusAddress, bool operation)
-        private
+        public
+        onlyStakePoolContractAndThisContract
     {
         // operation true for top up and false for withdraw
         uint256 index = validatorsMap[consensusAddress] - 1;

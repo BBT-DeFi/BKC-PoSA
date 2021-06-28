@@ -2,15 +2,20 @@ pragma solidity <=0.8.6;
 
 import "./IBond.sol";
 
-abstract contract IDelegation {
-    struct DelegationObject {
-        mapping(address => uint256) delegateAmountOfEach;
-        uint256 totalDelegation;
+abstract contract IValidator is IBond {
+    struct Validator {
+        address consensusAddress;
+        uint256 stakeAmount;
+        BondStatus bondStatus;
+        bool isJail;
+        // address payable feeAddress;
+        // address BBCFeeAddress;
+        // uint64  votingPower;
+
+        // // only in state
+        // bool jailed;
+        // uint256 incoming;
     }
 
-    struct userDelegation {
-        address consensusAddress;
-        uint256 bondedAmount;
-        uint256 unbondingAmount;
-    }
+    uint8 constant MAX_NUMBER_OF_VALIDATORS_IN_VALIDATOR_SET = 2;
 }

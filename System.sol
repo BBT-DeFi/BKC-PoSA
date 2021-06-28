@@ -20,5 +20,5 @@ abstract contract System {
         _;
     }
 
-    function init() external virtual;
+    // function init() external virtual ;
 }

@@ -18,17 +18,25 @@ contract StakePool is System, IValidator, IDelegation {
         alreadyInit = true;
     }
 
-    function delegate(address validatorConcensus) external payable onlyInit {
+    function getTotalDelegation(address consensusAddress)
+        public
+        view
+        returns (uint256)
+    {
+        return ValidatorDelegation[consensusAddress].totalDelegation;
+    }
+
+    function delegate(address validatorConsensus) external payable onlyInit {
         require(
-            vldpool.validatorsMap(validatorConcensus) > 0,
+            vldpool.validatorsMap(validatorConsensus) > 0,
             "can't delegate to a non-validator"
         );
-        if (UserDelegation[msg.sender].concensusAddress == validatorConcensus) {
+        if (UserDelegation[msg.sender].consensusAddress == validatorConsensus) {
             // if contribute more to the same validator
-            ValidatorDelegation[validatorConcensus].delegateAmountOfEach[
+            ValidatorDelegation[validatorConsensus].delegateAmountOfEach[
                 msg.sender
             ] += msg.value;
-            ValidatorDelegation[validatorConcensus].totalDelegation += msg
+            ValidatorDelegation[validatorConsensus].totalDelegation += msg
             .value;
             UserDelegation[msg.sender].bondedAmount += msg.value;
         } else {
@@ -37,13 +45,13 @@ contract StakePool is System, IValidator, IDelegation {
                 UserDelegation[msg.sender].unbondingAmount == 0
             ) {
                 // change validator
-                ValidatorDelegation[validatorConcensus].delegateAmountOfEach[
+                ValidatorDelegation[validatorConsensus].delegateAmountOfEach[
                     msg.sender
                 ] += msg.value;
-                ValidatorDelegation[validatorConcensus].totalDelegation += msg
+                ValidatorDelegation[validatorConsensus].totalDelegation += msg
                 .value;
                 UserDelegation[msg.sender] = userDelegation(
-                    validatorConcensus,
+                    validatorConsensus,
                     msg.value,
                     0
                 );
@@ -55,12 +63,12 @@ contract StakePool is System, IValidator, IDelegation {
         }
     }
 
-    function undelegate(address validatorConcensus, uint256 amount)
+    function undelegate(address validatorConsensus, uint256 amount)
         external
         onlyInit
     {
         require(
-            ValidatorDelegation[validatorConcensus].delegateAmountOfEach[
+            ValidatorDelegation[validatorConsensus].delegateAmountOfEach[
                 msg.sender
             ] > amount,
             "not enough amount to unbond"
@@ -70,23 +78,24 @@ contract StakePool is System, IValidator, IDelegation {
             "not enough amount to unbond"
         );
 
-        uint256 index = vldpool.validatorsMap(validatorConcensus) - 1;
+        uint256 index = vldpool.validatorsMap(validatorConsensus) - 1;
         (, , BondStatus bond, ) = vldpool.validators(index);
         if (bond == BondStatus.BONDED) {
-            ValidatorDelegation[validatorConcensus].delegateAmountOfEach[
+            ValidatorDelegation[validatorConsensus].delegateAmountOfEach[
                 msg.sender
             ] -= amount;
             UserDelegation[msg.sender].bondedAmount -= amount;
             UserDelegation[msg.sender].unbondingAmount += amount;
             UserUnDelegateQueue[msg.sender] = block.timestamp + unbondingPeriod;
         } else {
-            ValidatorDelegation[validatorConcensus].delegateAmountOfEach[
+            ValidatorDelegation[validatorConsensus].delegateAmountOfEach[
                 msg.sender
             ] -= amount;
+            ValidatorDelegation[validatorConsensus].totalDelegation -= amount;
             UserDelegation[msg.sender].bondedAmount -= amount;
             payable(msg.sender).transfer(amount);
         }
-        // ValidatorDelegation[validatorConcensus].delegateAmountOfEach[msg.sender] -= amount;
+        // ValidatorDelegation[validatorConsensus].delegateAmountOfEach[msg.sender] -= amount;
         // UserDelegation[msg.sender].bondedAmount -= amount;
         // UserDelegation[msg.sender].unbondingAmount += amount;
         // UserUnDelegateQueue[msg.sender] = block.timestamp + unbondingPeriod;

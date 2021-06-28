@@ -1,10 +1,12 @@
 pragma solidity <=0.8.6;
 
-abstract contract IValidator {
+import "./IBond.sol";
+
+abstract contract IValidator is IBond {
     struct Validator {
         address consensusAddress;
         uint256 stakeAmount;
-        bool isBond;
+        BondStatus bondStatus;
         bool isJail;
         // address payable feeAddress;
         // address BBCFeeAddress;
@@ -14,4 +16,6 @@ abstract contract IValidator {
         // bool jailed;
         // uint256 incoming;
     }
+
+    uint8 constant MAX_NUMBER_OF_VALIDATORS_IN_VALIDATOR_SET = 22;
 }

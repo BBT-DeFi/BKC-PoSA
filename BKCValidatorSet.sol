@@ -4,6 +4,7 @@ import "./System.sol";
 import "./Interface/IValidator.sol";
 import "./Interface/IBond.sol";
 import "./ValidatorPool.sol";
+import "./SystemReward.sol";
 
 /*[
     ["0x70F657164e5b75689b64B7fd1fA275F334f28e18","35481719561823448621","BondStatus.UNBONDED",63306535440133,false],
@@ -21,14 +22,16 @@ contract BKCValidatorSet is System, IValidator {
     Validator[] public currentValidatorSet; // the array holding the validator structs
     mapping(address => uint256) public currentValidatorSetMap; // map validator's consensus address to the position in the array
 
+    uint256 public number_of_validators;
+
     mapping(uint256 => bool) private alreadyIn;
     uint256[] private powers;
 
     Validator[] private tmpValidatorSet;
-
     uint256 public endTime;
 
     ValidatorPool private vldpool;
+    SystemReward private systemreward;
 
     modifier onlyAfterEndTime() {
         require(block.timestamp >= endTime, "can't update before end time");
@@ -47,21 +50,13 @@ contract BKCValidatorSet is System, IValidator {
         endTime += unbondingPeriod;
     }
 
-    function init(address validatorPoolAddress) external onlyNotInit {
-        // Validator memory firstValidator =  Validator(0xCA35b7d915458EF540aDe6068dFe2F44E8fa733c,
-        //             48648428258251948625, BondStatus.UNBONDED, false
-        //             );
-        // Validator memory secondValidator = Validator(0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2, 35481719561823448621, BondStatus.UNBONDED, false);
-
-        // tmpValidatorSet.push(firstValidator);
-        // tmpValidatorSet.push(secondValidator);
-
-        // for(uint i = 0; i < tmpValidatorSet.length; i++){
-        //     currentValidatorSet.push(tmpValidatorSet[i]);
-        //     currentValidatorSetMap[tmpValidatorSet[i].consensusAddress] = i+1;
-        // }
+    function init(address validatorPoolAddress, address systemRewardAddress)
+        external
+        onlyNotInit
+    {
         endTime = block.timestamp;
         vldpool = ValidatorPool(validatorPoolAddress);
+        systemreward = SystemReward(systemRewardAddress);
         updateValidatorSet();
         endTime = block.timestamp + unbondingPeriod;
         alreadyInit = true;
@@ -72,7 +67,7 @@ contract BKCValidatorSet is System, IValidator {
     }
 
     function updateValidatorSet() public onlyAfterEndTime {
-        uint256 number_of_validators = vldpool.NumberOfValidator() >
+        uint256 _number_of_validators = vldpool.NumberOfValidator() >
             MAX_NUMBER_OF_VALIDATORS_IN_VALIDATOR_SET
             ? MAX_NUMBER_OF_VALIDATORS_IN_VALIDATOR_SET
             : vldpool.NumberOfValidator();
@@ -87,6 +82,8 @@ contract BKCValidatorSet is System, IValidator {
 
         delete powers;
 
+        number_of_validators = _number_of_validators;
+
         // TODO : change to update validator by choosing the maximum number_of_validators from the pool instead of constant sorting.
         uint256 len = vldpool.NumberOfValidator();
         for (uint256 j = 0; j < len; j++) {
@@ -94,7 +91,7 @@ contract BKCValidatorSet is System, IValidator {
             uint256 power = vldpool.getTotalPower(a);
             powers.push(power);
         }
-        for (uint256 i = 0; i < number_of_validators; i++) {
+        for (uint256 i = 0; i < _number_of_validators; i++) {
             uint256 max_power = 0;
             uint256 max_index = 0;
             for (uint256 j = 0; j < len; j++) {
@@ -106,9 +103,13 @@ contract BKCValidatorSet is System, IValidator {
             alreadyIn[max_index] = true;
             (address a, uint256 stake, BondStatus b, bool isJail) = vldpool
             .validators(max_index);
+            vldpool.bondValidator(a); // bond the validator
+            (, , b, ) = vldpool.validators(max_index);
             currentValidatorSet.push(Validator(a, stake, b, isJail));
             currentValidatorSetMap[a] = i + 1;
         }
+
+        systemreward.distributeReward(); // distribute reward
 
         // uint j = 0;
 

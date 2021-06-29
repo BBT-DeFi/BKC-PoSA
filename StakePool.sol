@@ -24,12 +24,74 @@ contract StakePool is System, IValidator, IDelegation {
         alreadyInit = true;
     }
 
+    function getDelegators(address consensusAddress)
+        external
+        view
+        returns (address[] memory)
+    {
+        return ValidatorDelegation[consensusAddress].delegators;
+    }
+
     function getTotalDelegation(address consensusAddress)
         public
         view
         returns (uint256)
     {
         return ValidatorDelegation[consensusAddress].totalDelegation;
+    }
+
+    function getUserDelegationBondedAmount(address consensusAddress)
+        public
+        view
+        returns (uint256)
+    {
+        return UserDelegation[msg.sender].bondedAmountForEach[consensusAddress];
+    }
+
+    function getUserDelegationBondedAmountCallable(
+        address delegator,
+        address consensusAddress
+    ) public view returns (uint256) {
+        return UserDelegation[delegator].bondedAmountForEach[consensusAddress];
+    }
+
+    function getUserDelegationUnbondingAmount(address consensusAddress)
+        public
+        view
+        returns (uint256)
+    {
+        return
+            UserDelegation[msg.sender].unbondingAmountForEach[consensusAddress];
+    }
+
+    function getUserDelegationUnbondingAmountCallable(
+        address delegator,
+        address consensusAddress
+    ) public view returns (uint256) {
+        return
+            UserDelegation[delegator].unbondingAmountForEach[consensusAddress];
+    }
+
+    function getUserTotalDelegationAmount(address consensusAddress)
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getUserDelegationBondedAmount(consensusAddress) +
+            getUserDelegationUnbondingAmount(consensusAddress);
+    }
+
+    function getUserTotalDelegationAmountCallable(
+        address delegator,
+        address consensusAddress
+    ) external view returns (uint256) {
+        return
+            getUserDelegationBondedAmountCallable(delegator, consensusAddress) +
+            getUserDelegationUnbondingAmountCallable(
+                delegator,
+                consensusAddress
+            );
     }
 
     function delegate(address validatorConsensus) external payable onlyInit {
@@ -44,14 +106,49 @@ contract StakePool is System, IValidator, IDelegation {
             b == BondStatus.UNBONDED,
             "can't delegate to an bonding delegator or an unbonding delegator"
         );
+        // update the ValidatorDelegation object in delegateAmountOfEach, totalDelegation, and delegators array
         ValidatorDelegation[validatorConsensus].delegateAmountOfEach[
             msg.sender
         ] += msg.value;
         ValidatorDelegation[validatorConsensus].totalDelegation += msg.value;
+        bool found_delegator = false;
+        for (
+            uint256 i = 0;
+            i < ValidatorDelegation[validatorConsensus].delegators.length;
+            i++
+        ) {
+            if (
+                ValidatorDelegation[validatorConsensus].delegators[i] ==
+                msg.sender
+            ) {
+                found_delegator = true;
+                break;
+            }
+        }
+        if (!found_delegator) {
+            ValidatorDelegation[validatorConsensus].delegators.push(msg.sender);
+        }
         //vldpool.rePositionValidator(validatorConsensus, true); // the same as validator top up
+        // update the UserDelegation object in bondedAmountForEach, and validators array
         UserDelegation[msg.sender].bondedAmountForEach[
             validatorConsensus
         ] += msg.value;
+        bool found = false;
+        for (
+            uint256 i = 0;
+            i < UserDelegation[msg.sender].validators.length;
+            i++
+        ) {
+            if (
+                UserDelegation[msg.sender].validators[i] == validatorConsensus
+            ) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            UserDelegation[msg.sender].validators.push(validatorConsensus);
+        }
     }
 
     function undelegate(address validatorConsensus, uint256 amount)

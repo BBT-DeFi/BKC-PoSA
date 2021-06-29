@@ -25,6 +25,12 @@ var delegatorTest3;
 var delegatorTest4;
 var delegatorTest5;
 
+const BondStatus = {
+  BONDED: 0,
+  UNBONDING: 1,
+  UNBONDED: 2,
+};
+
 contract("BKCValidatorSet", (accounts) => {
   validatorTest1 = accounts[0];
   validatorTest2 = accounts[1];
@@ -136,7 +142,7 @@ contract("BKCValidatorSet", (accounts) => {
     );
   });
 
-  it("register validator (include fail attempts with not enough stake amount)", async () => {
+  it("register validator (include fail attempts with not enough stake amount : [10e18, 20e18, 25e18, 22e18, 1e18] => [10e18, 20e18, 25e18, 22e18, 50e18])", async () => {
     for (var i = 0; i < 4; i++) {
       await ValidatorPoolInstance.registerValidator({
         from: validators[i],
@@ -186,7 +192,7 @@ contract("BKCValidatorSet", (accounts) => {
     );
   });
 
-  it("update the validator set", async () => {
+  it("update the validator set : [10e18, 20e18, 25e18, 22e18, 50e18] active validators => (4,2)", async () => {
     try {
       await BKCValidatorSetInstance.currentValidatorSet.call(0);
       assert.fail();
@@ -220,7 +226,7 @@ contract("BKCValidatorSet", (accounts) => {
     assert.equal(v2[1], 25e18, "with 25 ether amount");
   });
 
-  it("validator can top-up", async () => {
+  it("validator can top-up : validator 0 do top up 16e18 [10e18, 20e18, 25e18, 22e18, 50e18] => [26e18, 20e18, 25e18, 22e18, 50e18]", async () => {
     ValidatorPoolInstance.validatorTopUp(validators[0], {
       from: validators[0],
       value: 16e18,
@@ -229,7 +235,9 @@ contract("BKCValidatorSet", (accounts) => {
     const v = await ValidatorPoolInstance.validators.call(index - 1);
     //console.log(v);
     assert.equal(v[1], 26e18, "the amount must be updated");
+  });
 
+  it("update of the validator set : [26e18, 20e18, 25e18, 22e18, 50e18] active validators => (4,0)", async () => {
     await BKCValidatorSetInstance.updateValidatorSet({ from: validators[0] });
     const v1 = await BKCValidatorSetInstance.currentValidatorSet.call(0);
     assert.equal(
@@ -250,4 +258,25 @@ contract("BKCValidatorSet", (accounts) => {
       "the second validator now should be the just-top-up validator"
     );
   });
+
+  it("after the update of the validator set : validator 2's bondStatus must be unbonding ", async () => {
+    const v2 = await ValidatorPoolInstance.validators.call(2);
+    assert.equal(
+      v2[2],
+      BondStatus.UNBONDING,
+      "the bond status of the second validator must be unbonding"
+    );
+  });
+
+  // it("validator can withdraw fund : validator 2 do withdraw fund 8e18 [26e18, 20e18, 25e18, 22e18, 50e18] => [26e18, 12e18, 25e18, 22e18, 50e18]", async () => {});
+
+  // it("update of the validator set nothing changes: [26e18, 20e18, 25e18, 22e18, 21e18] active validators => (4,0)", async () => {});
+
+  // it("validator can't withdraw fund or top-up if bonding ", async () => {});
+
+  // it("validator can't withdraw fund or top-up if unbonding", async () => {});
+
+  // it("validator withdraw too much fund that its fund is less than the minimum stake amount for validators", async () => {});
+
+  // delegation
 });

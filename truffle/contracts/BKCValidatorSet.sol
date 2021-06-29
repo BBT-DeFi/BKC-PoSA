@@ -93,7 +93,6 @@ contract BKCValidatorSet is System, IValidator {
 
         number_of_validators = _number_of_validators;
 
-        // TODO : change to update validator by choosing the maximum number_of_validators from the pool instead of constant sorting.
         uint256 len = vldpool.NumberOfValidator();
         for (uint256 j = 0; j < len; j++) {
             (address a, , , ) = vldpool.validators(j);

@@ -45,7 +45,7 @@ contract SystemReward is System, IValidator, IDelegation {
     }
 
     function fund() external payable onlyInit {
-        // TODO : funding algo here
+        // funding algo here
     }
 
     function addReward(address consensusAddress) external payable onlyInit {

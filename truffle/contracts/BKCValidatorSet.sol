@@ -66,18 +66,27 @@ contract BKCValidatorSet is System, IValidator {
         return currentValidatorSet;
     }
 
-    function updateValidatorSet() public onlyAfterEndTime {
-        uint256 _number_of_validators = vldpool.NumberOfValidator() >
+    // need to add onlyAfterEndTime here as modifier
+    function updateValidatorSet() public {
+
+            uint256 _number_of_validators
+         = MAX_NUMBER_OF_VALIDATORS_IN_VALIDATOR_SET;
+        if (
+            vldpool.NumberOfValidator() <
             MAX_NUMBER_OF_VALIDATORS_IN_VALIDATOR_SET
-            ? MAX_NUMBER_OF_VALIDATORS_IN_VALIDATOR_SET
-            : vldpool.NumberOfValidator();
+        ) {
+            _number_of_validators = vldpool.NumberOfValidator();
+        }
+        // uint256 _number_of_validators = vldpool.NumberOfValidator() >
+        //     MAX_NUMBER_OF_VALIDATORS_IN_VALIDATOR_SET
+        //     ? MAX_NUMBER_OF_VALIDATORS_IN_VALIDATOR_SET
+        //     : vldpool.NumberOfValidator();
         for (uint256 i = 0; i < currentValidatorSet.length; i++) {
             Validator memory validator = currentValidatorSet[i];
             vldpool.unBondValidator(validator.consensusAddress); // change the bond state to UNBONDED
             delete currentValidatorSetMap[validator.consensusAddress];
-
-            delete alreadyIn[i];
         }
+
         delete currentValidatorSet;
 
         delete powers;
@@ -90,8 +99,9 @@ contract BKCValidatorSet is System, IValidator {
             (address a, , , ) = vldpool.validators(j);
             uint256 power = vldpool.getTotalPower(a);
             powers.push(power);
+            alreadyIn[j] = false;
         }
-        for (uint256 i = 0; i < _number_of_validators; i++) {
+        for (uint256 i = 0; i < number_of_validators; i++) {
             uint256 max_power = 0;
             uint256 max_index = 0;
             for (uint256 j = 0; j < len; j++) {

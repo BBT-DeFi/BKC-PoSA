@@ -71,12 +71,12 @@ contract ValidatorPool is System, IValidator {
         payable
         onlyNotInit
     {
-        Validator memory firstValidator = Validator(
-            0xCA35b7d915458EF540aDe6068dFe2F44E8fa733c,
-            50 ether,
-            BondStatus.UNBONDED,
-            false
-        );
+        // Validator memory firstValidator = Validator(
+        //     0xCA35b7d915458EF540aDe6068dFe2F44E8fa733c,
+        //     50 ether,
+        //     BondStatus.UNBONDED,
+        //     false
+        // );
         // Validator memory secondValidator = Validator(
         //     0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2,
         //     100,
@@ -114,8 +114,8 @@ contract ValidatorPool is System, IValidator {
         _BKCValidatorSetAddress = BKCValidatorSetAddress;
         _StakePoolAddress = StakePoolAddress;
 
-        validators.push(firstValidator);
-        validatorsMap[firstValidator.consensusAddress] = 1;
+        // validators.push(firstValidator);
+        // validatorsMap[firstValidator.consensusAddress] = 1;
         // validators.push(secondValidator);
         // validatorsMap[secondValidator.consensusAddress] = 2;
         // validators.push(thirdValidator);

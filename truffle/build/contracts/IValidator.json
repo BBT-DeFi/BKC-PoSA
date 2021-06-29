@@ -1,0 +1,517 @@
+{
+  "contractName": "IValidator",
+  "abi": [],
+  "metadata": "{\"compiler\":{\"version\":\"0.8.6+commit.11564f7e\"},\"language\":\"Solidity\",\"output\":{\"abi\":[],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"/Users/sakonthephamongkhol/Downloads/Intern/BKC-PoSA/truffle/contracts/Interface/IValidator.sol\":\"IValidator\"},\"evmVersion\":\"berlin\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/Users/sakonthephamongkhol/Downloads/Intern/BKC-PoSA/truffle/contracts/Interface/IBond.sol\":{\"keccak256\":\"0x85d02bd6fd4d63685ea13282119aafaa99643d6106e12deac57086726e4ec4c4\",\"urls\":[\"bzz-raw://474a8ae4b56364a7a1c4ae25f87e3293d20d70efc1939bec665b4caa2e85bc79\",\"dweb:/ipfs/QmQvmwBGC9AxUk2DH5LBiehCf8GrkAMwaXf8spg7jAairJ\"]},\"/Users/sakonthephamongkhol/Downloads/Intern/BKC-PoSA/truffle/contracts/Interface/IValidator.sol\":{\"keccak256\":\"0xd407aea095976e744dd2dc9017b854b404887cdbae2c46a7b815313dfdc81afd\",\"urls\":[\"bzz-raw://19ef18cdbde0c4fd834692edc0630f1ebc1555e19dadc3bd91c671bd48ae6769\",\"dweb:/ipfs/QmPwAYo27Rh91nvKYUjoEeZMy8JNgjCK8UnRm12G2yfoR9\"]}},\"version\":1}",
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "immutableReferences": {},
+  "generatedSources": [],
+  "deployedGeneratedSources": [],
+  "sourceMap": "",
+  "deployedSourceMap": "",
+  "source": "pragma solidity <=0.8.6;\n\nimport \"./IBond.sol\";\n\nabstract contract IValidator is IBond {\n    struct Validator {\n        address consensusAddress;\n        uint256 stakeAmount;\n        BondStatus bondStatus;\n        bool isJail;\n        // address payable feeAddress;\n        // address BBCFeeAddress;\n        // uint64  votingPower;\n\n        // // only in state\n        // bool jailed;\n        // uint256 incoming;\n    }\n\n    uint8 constant MAX_NUMBER_OF_VALIDATORS_IN_VALIDATOR_SET = 2;\n}\n",
+  "sourcePath": "/Users/sakonthephamongkhol/Downloads/Intern/BKC-PoSA/truffle/contracts/Interface/IValidator.sol",
+  "ast": {
+    "absolutePath": "/Users/sakonthephamongkhol/Downloads/Intern/BKC-PoSA/truffle/contracts/Interface/IValidator.sol",
+    "exportedSymbols": {
+      "IBond": [
+        356
+      ],
+      "IValidator": [
+        401
+      ]
+    },
+    "id": 402,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 384,
+        "literals": [
+          "solidity",
+          "<=",
+          "0.8",
+          ".6"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "0:24:3"
+      },
+      {
+        "absolutePath": "/Users/sakonthephamongkhol/Downloads/Intern/BKC-PoSA/truffle/contracts/Interface/IBond.sol",
+        "file": "./IBond.sol",
+        "id": 385,
+        "nameLocation": "-1:-1:-1",
+        "nodeType": "ImportDirective",
+        "scope": 402,
+        "sourceUnit": 357,
+        "src": "26:21:3",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "abstract": true,
+        "baseContracts": [
+          {
+            "baseName": {
+              "id": 386,
+              "name": "IBond",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 356,
+              "src": "81:5:3"
+            },
+            "id": 387,
+            "nodeType": "InheritanceSpecifier",
+            "src": "81:5:3"
+          }
+        ],
+        "contractDependencies": [],
+        "contractKind": "contract",
+        "fullyImplemented": true,
+        "id": 401,
+        "linearizedBaseContracts": [
+          401,
+          356
+        ],
+        "name": "IValidator",
+        "nameLocation": "67:10:3",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "canonicalName": "IValidator.Validator",
+            "id": 397,
+            "members": [
+              {
+                "constant": false,
+                "id": 389,
+                "mutability": "mutable",
+                "name": "consensusAddress",
+                "nameLocation": "128:16:3",
+                "nodeType": "VariableDeclaration",
+                "scope": 397,
+                "src": "120:24:3",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_address",
+                  "typeString": "address"
+                },
+                "typeName": {
+                  "id": 388,
+                  "name": "address",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "120:7:3",
+                  "stateMutability": "nonpayable",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 391,
+                "mutability": "mutable",
+                "name": "stakeAmount",
+                "nameLocation": "162:11:3",
+                "nodeType": "VariableDeclaration",
+                "scope": 397,
+                "src": "154:19:3",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                },
+                "typeName": {
+                  "id": 390,
+                  "name": "uint256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "154:7:3",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 394,
+                "mutability": "mutable",
+                "name": "bondStatus",
+                "nameLocation": "194:10:3",
+                "nodeType": "VariableDeclaration",
+                "scope": 397,
+                "src": "183:21:3",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_enum$_BondStatus_$352",
+                  "typeString": "enum IBond.BondStatus"
+                },
+                "typeName": {
+                  "id": 393,
+                  "nodeType": "UserDefinedTypeName",
+                  "pathNode": {
+                    "id": 392,
+                    "name": "BondStatus",
+                    "nodeType": "IdentifierPath",
+                    "referencedDeclaration": 352,
+                    "src": "183:10:3"
+                  },
+                  "referencedDeclaration": 352,
+                  "src": "183:10:3",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_enum$_BondStatus_$352",
+                    "typeString": "enum IBond.BondStatus"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 396,
+                "mutability": "mutable",
+                "name": "isJail",
+                "nameLocation": "219:6:3",
+                "nodeType": "VariableDeclaration",
+                "scope": 397,
+                "src": "214:11:3",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_bool",
+                  "typeString": "bool"
+                },
+                "typeName": {
+                  "id": 395,
+                  "name": "bool",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "214:4:3",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "Validator",
+            "nameLocation": "100:9:3",
+            "nodeType": "StructDefinition",
+            "scope": 401,
+            "src": "93:326:3",
+            "visibility": "public"
+          },
+          {
+            "constant": true,
+            "id": 400,
+            "mutability": "constant",
+            "name": "MAX_NUMBER_OF_VALIDATORS_IN_VALIDATOR_SET",
+            "nameLocation": "440:41:3",
+            "nodeType": "VariableDeclaration",
+            "scope": 401,
+            "src": "425:60:3",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_uint8",
+              "typeString": "uint8"
+            },
+            "typeName": {
+              "id": 398,
+              "name": "uint8",
+              "nodeType": "ElementaryTypeName",
+              "src": "425:5:3",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint8",
+                "typeString": "uint8"
+              }
+            },
+            "value": {
+              "hexValue": "32",
+              "id": 399,
+              "isConstant": false,
+              "isLValue": false,
+              "isPure": true,
+              "kind": "number",
+              "lValueRequested": false,
+              "nodeType": "Literal",
+              "src": "484:1:3",
+              "typeDescriptions": {
+                "typeIdentifier": "t_rational_2_by_1",
+                "typeString": "int_const 2"
+              },
+              "value": "2"
+            },
+            "visibility": "internal"
+          }
+        ],
+        "scope": 402,
+        "src": "49:439:3",
+        "usedErrors": []
+      }
+    ],
+    "src": "0:489:3"
+  },
+  "legacyAST": {
+    "absolutePath": "/Users/sakonthephamongkhol/Downloads/Intern/BKC-PoSA/truffle/contracts/Interface/IValidator.sol",
+    "exportedSymbols": {
+      "IBond": [
+        356
+      ],
+      "IValidator": [
+        401
+      ]
+    },
+    "id": 402,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 384,
+        "literals": [
+          "solidity",
+          "<=",
+          "0.8",
+          ".6"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "0:24:3"
+      },
+      {
+        "absolutePath": "/Users/sakonthephamongkhol/Downloads/Intern/BKC-PoSA/truffle/contracts/Interface/IBond.sol",
+        "file": "./IBond.sol",
+        "id": 385,
+        "nameLocation": "-1:-1:-1",
+        "nodeType": "ImportDirective",
+        "scope": 402,
+        "sourceUnit": 357,
+        "src": "26:21:3",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "abstract": true,
+        "baseContracts": [
+          {
+            "baseName": {
+              "id": 386,
+              "name": "IBond",
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 356,
+              "src": "81:5:3"
+            },
+            "id": 387,
+            "nodeType": "InheritanceSpecifier",
+            "src": "81:5:3"
+          }
+        ],
+        "contractDependencies": [],
+        "contractKind": "contract",
+        "fullyImplemented": true,
+        "id": 401,
+        "linearizedBaseContracts": [
+          401,
+          356
+        ],
+        "name": "IValidator",
+        "nameLocation": "67:10:3",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "canonicalName": "IValidator.Validator",
+            "id": 397,
+            "members": [
+              {
+                "constant": false,
+                "id": 389,
+                "mutability": "mutable",
+                "name": "consensusAddress",
+                "nameLocation": "128:16:3",
+                "nodeType": "VariableDeclaration",
+                "scope": 397,
+                "src": "120:24:3",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_address",
+                  "typeString": "address"
+                },
+                "typeName": {
+                  "id": 388,
+                  "name": "address",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "120:7:3",
+                  "stateMutability": "nonpayable",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 391,
+                "mutability": "mutable",
+                "name": "stakeAmount",
+                "nameLocation": "162:11:3",
+                "nodeType": "VariableDeclaration",
+                "scope": 397,
+                "src": "154:19:3",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                },
+                "typeName": {
+                  "id": 390,
+                  "name": "uint256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "154:7:3",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 394,
+                "mutability": "mutable",
+                "name": "bondStatus",
+                "nameLocation": "194:10:3",
+                "nodeType": "VariableDeclaration",
+                "scope": 397,
+                "src": "183:21:3",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_enum$_BondStatus_$352",
+                  "typeString": "enum IBond.BondStatus"
+                },
+                "typeName": {
+                  "id": 393,
+                  "nodeType": "UserDefinedTypeName",
+                  "pathNode": {
+                    "id": 392,
+                    "name": "BondStatus",
+                    "nodeType": "IdentifierPath",
+                    "referencedDeclaration": 352,
+                    "src": "183:10:3"
+                  },
+                  "referencedDeclaration": 352,
+                  "src": "183:10:3",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_enum$_BondStatus_$352",
+                    "typeString": "enum IBond.BondStatus"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 396,
+                "mutability": "mutable",
+                "name": "isJail",
+                "nameLocation": "219:6:3",
+                "nodeType": "VariableDeclaration",
+                "scope": 397,
+                "src": "214:11:3",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_bool",
+                  "typeString": "bool"
+                },
+                "typeName": {
+                  "id": 395,
+                  "name": "bool",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "214:4:3",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "Validator",
+            "nameLocation": "100:9:3",
+            "nodeType": "StructDefinition",
+            "scope": 401,
+            "src": "93:326:3",
+            "visibility": "public"
+          },
+          {
+            "constant": true,
+            "id": 400,
+            "mutability": "constant",
+            "name": "MAX_NUMBER_OF_VALIDATORS_IN_VALIDATOR_SET",
+            "nameLocation": "440:41:3",
+            "nodeType": "VariableDeclaration",
+            "scope": 401,
+            "src": "425:60:3",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_uint8",
+              "typeString": "uint8"
+            },
+            "typeName": {
+              "id": 398,
+              "name": "uint8",
+              "nodeType": "ElementaryTypeName",
+              "src": "425:5:3",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint8",
+                "typeString": "uint8"
+              }
+            },
+            "value": {
+              "hexValue": "32",
+              "id": 399,
+              "isConstant": false,
+              "isLValue": false,
+              "isPure": true,
+              "kind": "number",
+              "lValueRequested": false,
+              "nodeType": "Literal",
+              "src": "484:1:3",
+              "typeDescriptions": {
+                "typeIdentifier": "t_rational_2_by_1",
+                "typeString": "int_const 2"
+              },
+              "value": "2"
+            },
+            "visibility": "internal"
+          }
+        ],
+        "scope": 402,
+        "src": "49:439:3",
+        "usedErrors": []
+      }
+    ],
+    "src": "0:489:3"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.8.6+commit.11564f7e.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "3.4.1",
+  "updatedAt": "2021-06-29T11:03:00.800Z",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  }
+}

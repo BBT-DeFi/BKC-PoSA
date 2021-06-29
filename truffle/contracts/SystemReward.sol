@@ -34,9 +34,9 @@ contract SystemReward is System, IValidator, IDelegation {
         validatorset = BKCValidatorSet(BKCValidatorSetAddress);
         stakepool = StakePool(StakePoolAddress);
         // initialize for testing (need to be funded 3 ether)
-        rewardMapping[0x17F6AD8Ef982297579C203069C1DbfFE4348c372] =
-            3 *
-            (10**18);
+        // rewardMapping[0x17F6AD8Ef982297579C203069C1DbfFE4348c372] =
+        //     3 *
+        //     (10**18);
         alreadyInit = true;
     }
 

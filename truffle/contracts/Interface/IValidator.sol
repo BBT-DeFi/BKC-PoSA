@@ -17,5 +17,5 @@ abstract contract IValidator is IBond {
         // uint256 incoming;
     }
 
-    uint8 constant MAX_NUMBER_OF_VALIDATORS_IN_VALIDATOR_SET = 22;
+    uint256 constant MAX_NUMBER_OF_VALIDATORS_IN_VALIDATOR_SET = 2;
 }

@@ -1,0 +1,673 @@
+{
+  "contractName": "IDelegation",
+  "abi": [],
+  "metadata": "{\"compiler\":{\"version\":\"0.8.6+commit.11564f7e\"},\"language\":\"Solidity\",\"output\":{\"abi\":[],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"/Users/sakonthephamongkhol/Downloads/Intern/BKC-PoSA/truffle/contracts/Interface/IDelegation.sol\":\"IDelegation\"},\"evmVersion\":\"berlin\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/Users/sakonthephamongkhol/Downloads/Intern/BKC-PoSA/truffle/contracts/Interface/IBond.sol\":{\"keccak256\":\"0x85d02bd6fd4d63685ea13282119aafaa99643d6106e12deac57086726e4ec4c4\",\"urls\":[\"bzz-raw://474a8ae4b56364a7a1c4ae25f87e3293d20d70efc1939bec665b4caa2e85bc79\",\"dweb:/ipfs/QmQvmwBGC9AxUk2DH5LBiehCf8GrkAMwaXf8spg7jAairJ\"]},\"/Users/sakonthephamongkhol/Downloads/Intern/BKC-PoSA/truffle/contracts/Interface/IDelegation.sol\":{\"keccak256\":\"0x7c55f98f0a320b36eeeb3cc09e86ea84dbbef3ec233133cf71b84fbf6e28d59d\",\"urls\":[\"bzz-raw://41be1596736fc5020c29c246ac30bca5bf7e30c369b6738d34cdfbbc53333a95\",\"dweb:/ipfs/QmazjBDpzRD2QwvKG3FBMFq8ZAbJ9ry5icSWaFXSWs27Uf\"]}},\"version\":1}",
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "immutableReferences": {},
+  "generatedSources": [],
+  "deployedGeneratedSources": [],
+  "sourceMap": "",
+  "deployedSourceMap": "",
+  "source": "pragma solidity <=0.8.6;\n\nimport \"./IBond.sol\";\n\nabstract contract IDelegation {\n    struct DelegationObject {\n        mapping(address => uint256) delegateAmountOfEach;\n        address[] delegators;\n        uint256 totalDelegation;\n    }\n\n    struct userDelegation {\n        address[] validators;\n        mapping(address => uint256) bondedAmountForEach;\n        mapping(address => uint256) unbondingAmountForEach;\n        // address consensusAddress;\n        // uint256 bondedAmount;\n        // uint256 unbondingAmount;\n    }\n}\n",
+  "sourcePath": "/Users/sakonthephamongkhol/Downloads/Intern/BKC-PoSA/truffle/contracts/Interface/IDelegation.sol",
+  "ast": {
+    "absolutePath": "/Users/sakonthephamongkhol/Downloads/Intern/BKC-PoSA/truffle/contracts/Interface/IDelegation.sol",
+    "exportedSymbols": {
+      "IBond": [
+        356
+      ],
+      "IDelegation": [
+        382
+      ]
+    },
+    "id": 383,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 358,
+        "literals": [
+          "solidity",
+          "<=",
+          "0.8",
+          ".6"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "0:24:2"
+      },
+      {
+        "absolutePath": "/Users/sakonthephamongkhol/Downloads/Intern/BKC-PoSA/truffle/contracts/Interface/IBond.sol",
+        "file": "./IBond.sol",
+        "id": 359,
+        "nameLocation": "-1:-1:-1",
+        "nodeType": "ImportDirective",
+        "scope": 383,
+        "sourceUnit": 357,
+        "src": "26:21:2",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "abstract": true,
+        "baseContracts": [],
+        "contractDependencies": [],
+        "contractKind": "contract",
+        "fullyImplemented": true,
+        "id": 382,
+        "linearizedBaseContracts": [
+          382
+        ],
+        "name": "IDelegation",
+        "nameLocation": "67:11:2",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "canonicalName": "IDelegation.DelegationObject",
+            "id": 369,
+            "members": [
+              {
+                "constant": false,
+                "id": 363,
+                "mutability": "mutable",
+                "name": "delegateAmountOfEach",
+                "nameLocation": "147:20:2",
+                "nodeType": "VariableDeclaration",
+                "scope": 369,
+                "src": "119:48:2",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                  "typeString": "mapping(address => uint256)"
+                },
+                "typeName": {
+                  "id": 362,
+                  "keyType": {
+                    "id": 360,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "127:7:2",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "nodeType": "Mapping",
+                  "src": "119:27:2",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                    "typeString": "mapping(address => uint256)"
+                  },
+                  "valueType": {
+                    "id": 361,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "138:7:2",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 366,
+                "mutability": "mutable",
+                "name": "delegators",
+                "nameLocation": "187:10:2",
+                "nodeType": "VariableDeclaration",
+                "scope": 369,
+                "src": "177:20:2",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                  "typeString": "address[]"
+                },
+                "typeName": {
+                  "baseType": {
+                    "id": 364,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "177:7:2",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "id": 365,
+                  "nodeType": "ArrayTypeName",
+                  "src": "177:9:2",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                    "typeString": "address[]"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 368,
+                "mutability": "mutable",
+                "name": "totalDelegation",
+                "nameLocation": "215:15:2",
+                "nodeType": "VariableDeclaration",
+                "scope": 369,
+                "src": "207:23:2",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                },
+                "typeName": {
+                  "id": 367,
+                  "name": "uint256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "207:7:2",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "DelegationObject",
+            "nameLocation": "92:16:2",
+            "nodeType": "StructDefinition",
+            "scope": 382,
+            "src": "85:152:2",
+            "visibility": "public"
+          },
+          {
+            "canonicalName": "IDelegation.userDelegation",
+            "id": 381,
+            "members": [
+              {
+                "constant": false,
+                "id": 372,
+                "mutability": "mutable",
+                "name": "validators",
+                "nameLocation": "285:10:2",
+                "nodeType": "VariableDeclaration",
+                "scope": 381,
+                "src": "275:20:2",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                  "typeString": "address[]"
+                },
+                "typeName": {
+                  "baseType": {
+                    "id": 370,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "275:7:2",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "id": 371,
+                  "nodeType": "ArrayTypeName",
+                  "src": "275:9:2",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                    "typeString": "address[]"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 376,
+                "mutability": "mutable",
+                "name": "bondedAmountForEach",
+                "nameLocation": "333:19:2",
+                "nodeType": "VariableDeclaration",
+                "scope": 381,
+                "src": "305:47:2",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                  "typeString": "mapping(address => uint256)"
+                },
+                "typeName": {
+                  "id": 375,
+                  "keyType": {
+                    "id": 373,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "313:7:2",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "nodeType": "Mapping",
+                  "src": "305:27:2",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                    "typeString": "mapping(address => uint256)"
+                  },
+                  "valueType": {
+                    "id": 374,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "324:7:2",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 380,
+                "mutability": "mutable",
+                "name": "unbondingAmountForEach",
+                "nameLocation": "390:22:2",
+                "nodeType": "VariableDeclaration",
+                "scope": 381,
+                "src": "362:50:2",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                  "typeString": "mapping(address => uint256)"
+                },
+                "typeName": {
+                  "id": 379,
+                  "keyType": {
+                    "id": 377,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "370:7:2",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "nodeType": "Mapping",
+                  "src": "362:27:2",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                    "typeString": "mapping(address => uint256)"
+                  },
+                  "valueType": {
+                    "id": 378,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "381:7:2",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "userDelegation",
+            "nameLocation": "250:14:2",
+            "nodeType": "StructDefinition",
+            "scope": 382,
+            "src": "243:282:2",
+            "visibility": "public"
+          }
+        ],
+        "scope": 383,
+        "src": "49:478:2",
+        "usedErrors": []
+      }
+    ],
+    "src": "0:528:2"
+  },
+  "legacyAST": {
+    "absolutePath": "/Users/sakonthephamongkhol/Downloads/Intern/BKC-PoSA/truffle/contracts/Interface/IDelegation.sol",
+    "exportedSymbols": {
+      "IBond": [
+        356
+      ],
+      "IDelegation": [
+        382
+      ]
+    },
+    "id": 383,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 358,
+        "literals": [
+          "solidity",
+          "<=",
+          "0.8",
+          ".6"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "0:24:2"
+      },
+      {
+        "absolutePath": "/Users/sakonthephamongkhol/Downloads/Intern/BKC-PoSA/truffle/contracts/Interface/IBond.sol",
+        "file": "./IBond.sol",
+        "id": 359,
+        "nameLocation": "-1:-1:-1",
+        "nodeType": "ImportDirective",
+        "scope": 383,
+        "sourceUnit": 357,
+        "src": "26:21:2",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "abstract": true,
+        "baseContracts": [],
+        "contractDependencies": [],
+        "contractKind": "contract",
+        "fullyImplemented": true,
+        "id": 382,
+        "linearizedBaseContracts": [
+          382
+        ],
+        "name": "IDelegation",
+        "nameLocation": "67:11:2",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "canonicalName": "IDelegation.DelegationObject",
+            "id": 369,
+            "members": [
+              {
+                "constant": false,
+                "id": 363,
+                "mutability": "mutable",
+                "name": "delegateAmountOfEach",
+                "nameLocation": "147:20:2",
+                "nodeType": "VariableDeclaration",
+                "scope": 369,
+                "src": "119:48:2",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                  "typeString": "mapping(address => uint256)"
+                },
+                "typeName": {
+                  "id": 362,
+                  "keyType": {
+                    "id": 360,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "127:7:2",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "nodeType": "Mapping",
+                  "src": "119:27:2",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                    "typeString": "mapping(address => uint256)"
+                  },
+                  "valueType": {
+                    "id": 361,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "138:7:2",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 366,
+                "mutability": "mutable",
+                "name": "delegators",
+                "nameLocation": "187:10:2",
+                "nodeType": "VariableDeclaration",
+                "scope": 369,
+                "src": "177:20:2",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                  "typeString": "address[]"
+                },
+                "typeName": {
+                  "baseType": {
+                    "id": 364,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "177:7:2",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "id": 365,
+                  "nodeType": "ArrayTypeName",
+                  "src": "177:9:2",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                    "typeString": "address[]"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 368,
+                "mutability": "mutable",
+                "name": "totalDelegation",
+                "nameLocation": "215:15:2",
+                "nodeType": "VariableDeclaration",
+                "scope": 369,
+                "src": "207:23:2",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                },
+                "typeName": {
+                  "id": 367,
+                  "name": "uint256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "207:7:2",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "DelegationObject",
+            "nameLocation": "92:16:2",
+            "nodeType": "StructDefinition",
+            "scope": 382,
+            "src": "85:152:2",
+            "visibility": "public"
+          },
+          {
+            "canonicalName": "IDelegation.userDelegation",
+            "id": 381,
+            "members": [
+              {
+                "constant": false,
+                "id": 372,
+                "mutability": "mutable",
+                "name": "validators",
+                "nameLocation": "285:10:2",
+                "nodeType": "VariableDeclaration",
+                "scope": 381,
+                "src": "275:20:2",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                  "typeString": "address[]"
+                },
+                "typeName": {
+                  "baseType": {
+                    "id": 370,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "275:7:2",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "id": 371,
+                  "nodeType": "ArrayTypeName",
+                  "src": "275:9:2",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                    "typeString": "address[]"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 376,
+                "mutability": "mutable",
+                "name": "bondedAmountForEach",
+                "nameLocation": "333:19:2",
+                "nodeType": "VariableDeclaration",
+                "scope": 381,
+                "src": "305:47:2",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                  "typeString": "mapping(address => uint256)"
+                },
+                "typeName": {
+                  "id": 375,
+                  "keyType": {
+                    "id": 373,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "313:7:2",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "nodeType": "Mapping",
+                  "src": "305:27:2",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                    "typeString": "mapping(address => uint256)"
+                  },
+                  "valueType": {
+                    "id": 374,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "324:7:2",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 380,
+                "mutability": "mutable",
+                "name": "unbondingAmountForEach",
+                "nameLocation": "390:22:2",
+                "nodeType": "VariableDeclaration",
+                "scope": 381,
+                "src": "362:50:2",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                  "typeString": "mapping(address => uint256)"
+                },
+                "typeName": {
+                  "id": 379,
+                  "keyType": {
+                    "id": 377,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "370:7:2",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "nodeType": "Mapping",
+                  "src": "362:27:2",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                    "typeString": "mapping(address => uint256)"
+                  },
+                  "valueType": {
+                    "id": 378,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "381:7:2",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "userDelegation",
+            "nameLocation": "250:14:2",
+            "nodeType": "StructDefinition",
+            "scope": 382,
+            "src": "243:282:2",
+            "visibility": "public"
+          }
+        ],
+        "scope": 383,
+        "src": "49:478:2",
+        "usedErrors": []
+      }
+    ],
+    "src": "0:528:2"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.8.6+commit.11564f7e.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "3.4.1",
+  "updatedAt": "2021-06-29T11:03:00.800Z",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  }
+}

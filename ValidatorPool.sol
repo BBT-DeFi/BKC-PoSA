@@ -17,7 +17,7 @@ contract ValidatorPool is System, IValidator {
     address private _BKCValidatorSetAddress;
     address private _StakePoolAddress;
 
-    uint256 constant MIN_VALIDATOR_STAKE_AMOUNT = 10; //10000 * (10**18); // 10000 KUB
+    uint256 constant MIN_VALIDATOR_STAKE_AMOUNT = 10 ether; //10000 * (10**18); // 10000 KUB
 
     mapping(address => uint256) public validatorUnBondQueue;
 
@@ -40,7 +40,7 @@ contract ValidatorPool is System, IValidator {
         _;
     }
 
-    modifier onlyBCKValidatorSetContract() {
+    modifier onlyBKCValidatorSetContract() {
         require(
             msg.sender == _BKCValidatorSetAddress,
             "can only be called from BKCValidatorSet Contract"
@@ -57,6 +57,11 @@ contract ValidatorPool is System, IValidator {
         _;
     }
 
+    modifier onlyStakePoolContractAndThisContract {
+        require(msg.sender == address(this) || msg.sender == _StakePoolAddress);
+        _;
+    }
+
     function NumberOfValidator() public view returns (uint256) {
         return validators.length;
     }
@@ -68,40 +73,40 @@ contract ValidatorPool is System, IValidator {
     {
         Validator memory firstValidator = Validator(
             0xCA35b7d915458EF540aDe6068dFe2F44E8fa733c,
-            50,
+            50 ether,
             BondStatus.UNBONDED,
             false
         );
-        Validator memory secondValidator = Validator(
-            0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2,
-            100,
-            BondStatus.UNBONDED,
-            false
-        );
-        Validator memory thirdValidator = Validator(
-            0x4B20993Bc481177ec7E8f571ceCaE8A9e22C02db,
-            75,
-            BondStatus.UNBONDED,
-            false
-        );
-        Validator memory fourthValidator = Validator(
-            0x78731D3Ca6b7E34aC0F824c42a7cC18A495cabaB,
-            120,
-            BondStatus.UNBONDED,
-            false
-        );
-        Validator memory fifthValidator = Validator(
-            0x617F2E2fD72FD9D5503197092aC168c91465E7f2,
-            20,
-            BondStatus.UNBONDED,
-            false
-        );
-        Validator memory sixthValidator = Validator(
-            0x17F6AD8Ef982297579C203069C1DbfFE4348c372,
-            200,
-            BondStatus.UNBONDED,
-            false
-        );
+        // Validator memory secondValidator = Validator(
+        //     0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2,
+        //     100,
+        //     BondStatus.UNBONDED,
+        //     false
+        // );
+        // Validator memory thirdValidator = Validator(
+        //     0x4B20993Bc481177ec7E8f571ceCaE8A9e22C02db,
+        //     75,
+        //     BondStatus.UNBONDED,
+        //     false
+        // );
+        // Validator memory fourthValidator = Validator(
+        //     0x78731D3Ca6b7E34aC0F824c42a7cC18A495cabaB,
+        //     120,
+        //     BondStatus.UNBONDED,
+        //     false
+        // );
+        // Validator memory fifthValidator = Validator(
+        //     0x617F2E2fD72FD9D5503197092aC168c91465E7f2,
+        //     20,
+        //     BondStatus.UNBONDED,
+        //     false
+        // );
+        // Validator memory sixthValidator = Validator(
+        //     0x17F6AD8Ef982297579C203069C1DbfFE4348c372,
+        //     200,
+        //     BondStatus.UNBONDED,
+        //     false
+        // );
 
         validatorset = BKCValidatorSet(BKCValidatorSetAddress);
         stakepool = StakePool(StakePoolAddress);
@@ -109,12 +114,25 @@ contract ValidatorPool is System, IValidator {
         _BKCValidatorSetAddress = BKCValidatorSetAddress;
         _StakePoolAddress = StakePoolAddress;
 
-        addValidatorToSortedList(firstValidator);
-        addValidatorToSortedList(secondValidator);
-        addValidatorToSortedList(thirdValidator);
-        addValidatorToSortedList(fourthValidator);
-        addValidatorToSortedList(fifthValidator);
-        addValidatorToSortedList(sixthValidator);
+        validators.push(firstValidator);
+        validatorsMap[firstValidator.consensusAddress] = 1;
+        // validators.push(secondValidator);
+        // validatorsMap[secondValidator.consensusAddress] = 2;
+        // validators.push(thirdValidator);
+        // validatorsMap[thirdValidator.consensusAddress] = 3;
+        // validators.push(fourthValidator);
+        // validatorsMap[fourthValidator.consensusAddress] = 4;
+        // validators.push(fifthValidator);
+        // validatorsMap[fifthValidator.consensusAddress] = 5;
+        // validators.push(sixthValidator);
+        // validatorsMap[sixthValidator.consensusAddress] = 6;
+
+        // addValidatorToSortedList(firstValidator);
+        // addValidatorToSortedList(secondValidator);
+        // addValidatorToSortedList(thirdValidator);
+        // addValidatorToSortedList(fourthValidator);
+        // addValidatorToSortedList(fifthValidator);
+        // addValidatorToSortedList(sixthValidator);
 
         alreadyInit = true;
     }
@@ -135,7 +153,7 @@ contract ValidatorPool is System, IValidator {
         bool res = reEvaluateValidator(consensusAddress);
         if (res) {
             // validator still have enough
-            rePositionValidator(consensusAddress, false);
+            //rePositionValidator(consensusAddress, false);
         }
     }
 
@@ -149,13 +167,13 @@ contract ValidatorPool is System, IValidator {
         require(msg.value > 0, "can't top up with 0 amount");
         validators[validatorsMap[consensusAddress] - 1].stakeAmount += msg
         .value;
-        rePositionValidator(consensusAddress, true);
+        //rePositionValidator(consensusAddress, true);
     }
 
     function bondValidator(address consensusAddress)
         external
         onlyInit
-        onlyBCKValidatorSetContract
+        onlyBKCValidatorSetContract
     {
         validators[validatorsMap[consensusAddress] - 1].bondStatus = BondStatus
         .BONDED;
@@ -164,7 +182,7 @@ contract ValidatorPool is System, IValidator {
     function unBondValidator(address consensusAddress)
         external
         onlyInit
-        onlyBCKValidatorSetContract
+        onlyBKCValidatorSetContract
     {
         validators[validatorsMap[consensusAddress] - 1].bondStatus = BondStatus
         .UNBONDING;
@@ -208,10 +226,11 @@ contract ValidatorPool is System, IValidator {
 
     function registerValidator() external payable onlyInit {
         require(
-            msg.value > MIN_VALIDATOR_STAKE_AMOUNT,
+            msg.value >= MIN_VALIDATOR_STAKE_AMOUNT,
             "can't register to be a validator not enough staking amount sent"
         );
-        addValidatorToSortedList(
+        //addValidatorToSortedList(Validator(msg.sender, msg.value, BondStatus.UNBONDED, false));
+        validators.push(
             Validator(msg.sender, msg.value, BondStatus.UNBONDED, false)
         );
         validatorsMap[msg.sender] = validators.length;
@@ -313,9 +332,13 @@ contract ValidatorPool is System, IValidator {
         ) {
             uint256 index = validatorsMap[consensusAddress];
             for (uint256 i = index; i < validators.length - 1; i++) {
-                validators[i] = validators[i + 1]; // move to left
+                validators[i] = validators[i + 1]; // shift left
                 validatorsMap[validators[i].consensusAddress] = i + 1;
             }
+            payable(consensusAddress).transfer(
+                validators[validatorsMap[consensusAddress] - 1].stakeAmount
+            );
+            // TODO : deal with the delegation of this validator.
             validators.pop();
             delete validatorsMap[consensusAddress];
             return false;
@@ -324,7 +347,8 @@ contract ValidatorPool is System, IValidator {
     }
 
     function rePositionValidator(address consensusAddress, bool operation)
-        private
+        public
+        onlyStakePoolContractAndThisContract
     {
         // operation true for top up and false for withdraw
         uint256 index = validatorsMap[consensusAddress] - 1;

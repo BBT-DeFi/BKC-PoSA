@@ -137,39 +137,36 @@ contract ValidatorPool is System, IValidator {
         alreadyInit = true;
     }
 
-    function withdrawFund(address consensusAddress, uint256 amount)
+    function withdrawFund(uint256 amount)
         external
         onlyInit
-        onlyNotBonded(consensusAddress)
+        onlyNotBonded(msg.sender)
     {
-        require(msg.sender == consensusAddress, "can't withdraw others' fund");
         require(
-            validators[validatorsMap[consensusAddress] - 1].stakeAmount >
-                amount,
+            validators[validatorsMap[msg.sender] - 1].stakeAmount > amount,
             "not enough fund to withdraw"
         );
-        payable(consensusAddress).transfer(amount);
-        validators[validatorsMap[consensusAddress] - 1].stakeAmount -= amount;
-        bool res = reEvaluateValidator(consensusAddress);
+        payable(msg.sender).transfer(amount);
+        validators[validatorsMap[msg.sender] - 1].stakeAmount -= amount;
+        bool res = reEvaluateValidator(msg.sender);
         if (res) {
             // validator still have enough
             //rePositionValidator(consensusAddress, false);
         }
     }
 
-    function validatorTopUp(address consensusAddress)
+    function validatorTopUp()
         external
         payable
         onlyInit
-        onlyNotBonded(consensusAddress)
+        onlyNotBonded(msg.sender)
     {
-        require(msg.sender == consensusAddress, "can't top up for others");
         require(msg.value > 0, "can't top up with 0 amount");
-        validators[validatorsMap[consensusAddress] - 1].stakeAmount += msg
-        .value;
+        validators[validatorsMap[msg.sender] - 1].stakeAmount += msg.value;
         //rePositionValidator(consensusAddress, true);
     }
 
+    // bonding validator does not bond its delegators' delegations, just that it will uses all the bonded delegation from the before.
     function bondValidator(address consensusAddress)
         external
         onlyInit
@@ -179,6 +176,7 @@ contract ValidatorPool is System, IValidator {
         .BONDED;
     }
 
+    // unbonding validator does not unbond its delegators' delegations, just that it will allow delegators to unbond fund quickly after unbonded.
     function unBondValidator(address consensusAddress)
         external
         onlyInit
@@ -191,17 +189,13 @@ contract ValidatorPool is System, IValidator {
             unbondingPeriod;
     }
 
-    function removeUnBondingValidatorFromQueue(address consensusAddress)
-        public
-        onlyInit
-    {
-        require(msg.sender == consensusAddress, "can't unbond other, only you");
+    function removeUnBondingValidatorFromQueue() public onlyInit {
         require(
-            block.timestamp > validatorUnBondQueue[consensusAddress],
+            block.timestamp > validatorUnBondQueue[msg.sender],
             "unbonding still in progress"
         );
-        delete validatorUnBondQueue[consensusAddress];
-        validators[validatorsMap[consensusAddress] - 1].bondStatus = BondStatus
+        delete validatorUnBondQueue[msg.sender];
+        validators[validatorsMap[msg.sender] - 1].bondStatus = BondStatus
         .UNBONDED;
     }
 
@@ -228,6 +222,10 @@ contract ValidatorPool is System, IValidator {
         require(
             msg.value >= MIN_VALIDATOR_STAKE_AMOUNT,
             "can't register to be a validator not enough staking amount sent"
+        );
+        require(
+            validatorsMap[msg.sender] == 0,
+            "can't register same validator"
         );
         //addValidatorToSortedList(Validator(msg.sender, msg.value, BondStatus.UNBONDED, false));
         validators.push(
@@ -330,7 +328,7 @@ contract ValidatorPool is System, IValidator {
             validators[validatorsMap[consensusAddress] - 1].stakeAmount <
             MIN_VALIDATOR_STAKE_AMOUNT
         ) {
-            uint256 index = validatorsMap[consensusAddress];
+            uint256 index = validatorsMap[consensusAddress] - 1;
             for (uint256 i = index; i < validators.length - 1; i++) {
                 validators[i] = validators[i + 1]; // shift left
                 validatorsMap[validators[i].consensusAddress] = i + 1;
@@ -338,7 +336,12 @@ contract ValidatorPool is System, IValidator {
             payable(consensusAddress).transfer(
                 validators[validatorsMap[consensusAddress] - 1].stakeAmount
             );
-            // TODO : deal with the delegation of this validator.
+            address[] memory delegators = stakepool.getDelegators(
+                consensusAddress
+            );
+            for (uint256 i = 0; i < delegators.length; i++) {
+                stakepool.removeDelegation(delegators[i], consensusAddress);
+            }
             validators.pop();
             delete validatorsMap[consensusAddress];
             return false;

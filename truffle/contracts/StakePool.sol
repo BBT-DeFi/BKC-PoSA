@@ -11,6 +11,12 @@ contract StakePool is System, IValidator, IDelegation {
 
     mapping(address => UnBondingQueueStruct[]) public UserUnDelegateQueue;
 
+    address _ValidatorPoolAddress;
+
+    uint256[] private queueAmount;
+    uint256[] private queueTime;
+    address[] private queueValidator;
+
     ValidatorPool vldpool;
 
     struct UnBondingQueueStruct {
@@ -19,9 +25,57 @@ contract StakePool is System, IValidator, IDelegation {
         address validator;
     }
 
+    modifier onlyValidatorPoolContract() {
+        require(msg.sender == _ValidatorPoolAddress);
+        _;
+    }
+
     function init(address validatorPoolAddress) external onlyNotInit {
+        _ValidatorPoolAddress = validatorPoolAddress;
         vldpool = ValidatorPool(validatorPoolAddress);
         alreadyInit = true;
+    }
+
+    function getUnbondingQueueAmount(address delegator)
+        external
+        onlyInit
+        returns (uint256[] memory)
+    {
+        delete queueAmount;
+        UnBondingQueueStruct[] memory Queue = UserUnDelegateQueue[delegator];
+        for (uint256 i = 0; i < Queue.length; i++) {
+            uint256 amount = Queue[i].amount;
+            queueAmount.push(amount);
+        }
+        return queueAmount;
+    }
+
+    function getUnbondingQueueTime(address delegator)
+        external
+        onlyInit
+        returns (uint256[] memory)
+    {
+        delete queueTime;
+        UnBondingQueueStruct[] memory Queue = UserUnDelegateQueue[delegator];
+        for (uint256 i = 0; i < Queue.length; i++) {
+            uint256 time = Queue[i].time;
+            queueTime.push(time);
+        }
+        return queueTime;
+    }
+
+    function getUnbondingQueueValidator(address delegator)
+        external
+        onlyInit
+        returns (address[] memory)
+    {
+        delete queueValidator;
+        UnBondingQueueStruct[] memory Queue = UserUnDelegateQueue[delegator];
+        for (uint256 i = 0; i < Queue.length; i++) {
+            address validator = Queue[i].validator;
+            queueValidator.push(validator);
+        }
+        return queueValidator;
     }
 
     function getDelegators(address consensusAddress)
@@ -94,6 +148,29 @@ contract StakePool is System, IValidator, IDelegation {
             );
     }
 
+    function removeDelegation(address delegator, address validator)
+        external
+        onlyInit
+        onlyValidatorPoolContract
+    {
+        uint256 totalDelegationOfDelegator = ValidatorDelegation[validator]
+        .delegateAmountOfEach[delegator];
+        require(
+            address(this).balance >= totalDelegationOfDelegator,
+            "not enough fund to return to delegator, for some reason..."
+        );
+        require(
+            UserDelegation[delegator].unbondingAmountForEach[validator] == 0,
+            "still have unbonding fund of this validator, which should not be possible"
+        );
+        payable(delegator).transfer(totalDelegationOfDelegator);
+        ValidatorDelegation[validator]
+        .totalDelegation -= totalDelegationOfDelegator;
+        ValidatorDelegation[validator].delegateAmountOfEach[delegator] = 0;
+        UserDelegation[delegator].bondedAmountForEach[validator] = 0;
+        UserDelegation[delegator].unbondingAmountForEach[validator] = 0;
+    }
+
     function delegate(address validatorConsensus) external payable onlyInit {
         require(
             vldpool.validatorsMap(validatorConsensus) > 0,
@@ -164,7 +241,7 @@ contract StakePool is System, IValidator, IDelegation {
 
         uint256 index = vldpool.validatorsMap(validatorConsensus) - 1;
         (, , BondStatus bond, ) = vldpool.validators(index);
-        if (bond == BondStatus.BONDED) {
+        if (bond == BondStatus.BONDED || bond == BondStatus.UNBONDING) {
             // if bond then all the delegation should be in bondedAmountForEach of the validator so unbond it.
             //ValidatorDelegation[validatorConsensus].delegateAmountOfEach[msg.sender] -= amount;
             UserDelegation[msg.sender].bondedAmountForEach[

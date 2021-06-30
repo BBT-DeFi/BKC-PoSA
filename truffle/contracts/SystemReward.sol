@@ -59,11 +59,7 @@ contract SystemReward is System, IValidator, IDelegation {
             100; // the reward is kept at 10% for system maintenance.
     }
 
-    function distributeReward()
-        external
-        onlyInit
-    /*onlyBKCValidatorSetContract*/
-    {
+    function distributeReward() external onlyInit onlyBKCValidatorSetContract {
         uint256 totalRewardToBeDistributed = 0;
 
         for (uint256 i = 0; i < validatorset.number_of_validators(); i++) {

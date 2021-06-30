@@ -1,4 +1,5 @@
 const Web3 = require("web3");
+const colors = require("colors");
 const web3 = new Web3("http://localhost:7545");
 
 const BKCValidatorSet = artifacts.require("BKCValidatorSet");
@@ -59,7 +60,7 @@ function printValidator(v) {
 }
 
 async function printUserUnDelegateQueue() {
-  console.log("\nDelegators in User Undelegate Queue");
+  console.log(colors.green("\nDelegators in User Undelegate Queue"));
   for (var j = 0; j < delegators.length; j++) {
     for (var i = 0; i < validators.length; i++) {
       const amount =
@@ -100,21 +101,21 @@ async function printUserUnDelegateQueue() {
 async function printState() {
   async function BKCValidatorSetState() {
     const num = await BKCValidatorSetInstance.number_of_validators.call();
-    console.log("\nValidators in currentValidatorSet");
+    console.log(colors.yellow("\nValidators in currentValidatorSet"));
     for (var i = 0; i < num; i++) {
       const v = await BKCValidatorSetInstance.currentValidatorSet.call(i);
       printValidator(v);
     }
   }
   async function ValidatorPoolState() {
-    console.log("\nValidators in Validator pool");
+    console.log(colors.cyan("\nValidators in Validator pool"));
     for (var i = 0; i < validators.length; i++) {
       try {
         const v = await ValidatorPoolInstance.validators.call(i);
         printValidator(v);
       } catch (err) {}
     }
-    console.log("\nValidators in Validator Unbonding Queue");
+    console.log(colors.blue("\nValidators in Validator Unbonding Queue"));
     for (var i = 0; i < validators.length; i++) {
       try {
         const v = await ValidatorPoolInstance.validators.call(i);
@@ -130,7 +131,7 @@ async function printState() {
     }
   }
   async function StakePoolState() {
-    console.log("\nDelegations in Stake Pool");
+    console.log(colors.magenta("\nDelegations in Stake Pool"));
     for (var i = 0; i < validators.length; i++) {
       try {
         const v = await ValidatorPoolInstance.validators.call(i);
@@ -159,7 +160,9 @@ async function printState() {
   async function SystemRewardState() {
     const num = await BKCValidatorSetInstance.number_of_validators.call();
     console.log(
-      "\nReward in reward mapping for the currently active validators"
+      colors.brightBlue(
+        "\nReward in reward mapping for the currently active validators"
+      )
     );
     for (var i = 0; i < num; i++) {
       const v = await BKCValidatorSetInstance.currentValidatorSet.call(i);
@@ -336,6 +339,7 @@ contract("All Contracts", (accounts) => {
     );
   });
 
+  // validator
   it("register validator (include fail attempts with not enough stake amount : [10e18, 20e18, 25e18, 22e18, 1e18] => [10e18, 20e18, 25e18, 22e18, 50e18])", async () => {
     await printState();
     for (var i = 0; i < 4; i++) {
@@ -510,7 +514,7 @@ contract("All Contracts", (accounts) => {
     );
   });
 
-  it("validator can't withdraw fund or top-up if bonding validator 0 try to withdraw and top-up", async () => {
+  it("validator can't withdraw fund or top-up if bonded : validator 0 try to withdraw and top-up", async () => {
     await printState();
     const v0 = await ValidatorPoolInstance.validators.call(0);
     assert.equal(v0[2], BondStatus.BONDED);
@@ -537,7 +541,7 @@ contract("All Contracts", (accounts) => {
     }
   });
 
-  it("validator can't withdraw fund or top-up if unbonding validator 2 try to withdraw and top-up", async () => {
+  it("validator can't withdraw fund or top-up if unbonding : validator 2 try to withdraw and top-up", async () => {
     await printState();
     const v2 = await ValidatorPoolInstance.validators.call(2);
     assert.equal(v2[2], BondStatus.UNBONDING);
@@ -586,7 +590,7 @@ contract("All Contracts", (accounts) => {
     assert.equal(num, 4);
   });
 
-  it("renew registering validator : [26e18, 25e18, 22e18, 21e18] => [26e18, 25e18, 22e18, 21e18, 20e18])", async () => {
+  it("renew registering validator : register validator1 with registering fund 20e18 [26e18, 25e18, 22e18, 21e18] => [26e18, 25e18, 22e18, 21e18, 20e18])", async () => {
     await printState();
     await ValidatorPoolInstance.registerValidator({
       from: validators[1],
@@ -610,7 +614,7 @@ contract("All Contracts", (accounts) => {
     );
   });
 
-  it("try to register the same validator", async () => {
+  it("try to register the same validator : registering validator1 again", async () => {
     await printState();
     try {
       await ValidatorPoolInstance.registerValidator({
@@ -885,7 +889,7 @@ contract("All Contracts", (accounts) => {
     );
   });
 
-  it("undelegate from a bonded validator will result in DelegationQueue with nothing changes to the delegation object : delegator2 undelegates 1e18 from validator1 which is an active validator", async () => {
+  it("undelegate from a bonded validator will result in UserUnDelegationQueue with nothing changes to the delegation object : delegator2 undelegates 1e18 from validator1 which is an active validator", async () => {
     await printState();
     await StakePoolInstance.undelegate(validators[1], (1e18).toString(), {
       from: delegators[2],
@@ -893,7 +897,7 @@ contract("All Contracts", (accounts) => {
     await checkDelegation(2, 1, 1e18, 1e18, 2e18);
   });
 
-  it("undelegate from an unbonding validator will result in DelegationQueue with nothing changes to the delegation object : delegator2 undelegates 1e18 from an unbonding validator3", async () => {
+  it("undelegate from an unbonding validator will result in UserUnDelegationQueue with nothing changes to the delegation object : delegator2 undelegates 1e18 from an unbonding validator3", async () => {
     await printState();
     await StakePoolInstance.undelegate(validators[3], (1e18).toString(), {
       from: delegators[2],

@@ -82,7 +82,7 @@ contract SystemReward is System, IValidator, IDelegation {
     }
 
     function getTotalPower(address consensusAddress)
-        external
+        public
         view
         returns (uint256)
     {
@@ -94,6 +94,32 @@ contract SystemReward is System, IValidator, IDelegation {
         );
         uint256 totalPower = stakeAmount + totalDelegation;
         return totalPower;
+    }
+
+    function AllocateJailValidatorReward(address consensusAddress)
+        external
+        onlyInit
+        onlyBKCValidatorSetContract
+    {
+        uint256 reward = rewardMapping[consensusAddress];
+        uint256 totalPowerOfValidatorSet = 0;
+        for (uint256 i = 0; i < validatorset.number_of_validators(); i++) {
+            (address a, , , bool isJail) = validatorset.currentValidatorSet(i);
+            if (!isJail) {
+                uint256 power = getTotalPower(a);
+                totalPowerOfValidatorSet += power;
+            }
+        }
+        reward = (reward * PERCENTAGE_OF_REWARD_KEPT_FOR_MAINTENANCE) / 100;
+        for (uint256 i = 0; i < validatorset.number_of_validators(); i++) {
+            (address a, , , bool isJail) = validatorset.currentValidatorSet(i);
+            if (!isJail) {
+                rewardMapping[a] +=
+                    (reward * getTotalPower(a)) /
+                    totalPowerOfValidatorSet;
+            }
+        }
+        rewardMapping[consensusAddress] = 0;
     }
 
     function calculateAndTransferReward(address consensusAddress)

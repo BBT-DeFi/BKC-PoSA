@@ -18,4 +18,6 @@ abstract contract IValidator is IBond {
     }
 
     uint256 constant MAX_NUMBER_OF_VALIDATORS_IN_VALIDATOR_SET = 2;
+
+    uint256 constant VALIDATOR_JAIL_PERIOD = 10 seconds;
 }

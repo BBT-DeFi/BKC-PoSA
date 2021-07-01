@@ -7,5 +7,5 @@ abstract contract IBond {
         UNBONDED
     }
 
-    uint256 unbondingPeriod = 1 days;
+    uint256 unbondingPeriod = 10 seconds;
 }

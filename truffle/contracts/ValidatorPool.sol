@@ -21,6 +21,8 @@ contract ValidatorPool is System, IValidator {
 
     mapping(address => uint256) public validatorUnBondQueue;
 
+    mapping(address => uint256) public validatorJailQueue;
+
     modifier onlyValidatorInValidatorSet(address consensusAddress) {
         require(
             validatorset.currentValidatorSetMap(consensusAddress) > 0,
@@ -174,6 +176,7 @@ contract ValidatorPool is System, IValidator {
     {
         validators[validatorsMap[consensusAddress] - 1].bondStatus = BondStatus
         .BONDED;
+        delete validatorUnBondQueue[consensusAddress]; // remove from the unbondedqueue if any. (this will only be called by updateValidatorSet)
     }
 
     // unbonding validator does not unbond its delegators' delegations, just that it will allow delegators to unbond fund quickly after unbonded.
@@ -194,9 +197,24 @@ contract ValidatorPool is System, IValidator {
             block.timestamp > validatorUnBondQueue[msg.sender],
             "unbonding still in progress"
         );
+        require(
+            validatorJailQueue[msg.sender] == 0,
+            "can't unbond, validator is jailed, also the validator should not be in the unbonding queue"
+        );
         delete validatorUnBondQueue[msg.sender];
         validators[validatorsMap[msg.sender] - 1].bondStatus = BondStatus
         .UNBONDED;
+    }
+
+    function removeJailValidatorFromQueue() public onlyInit {
+        require(
+            block.timestamp > validatorJailQueue[msg.sender],
+            "jailing still in progress"
+        );
+        delete validatorJailQueue[msg.sender];
+        validators[validatorsMap[msg.sender] - 1].bondStatus = BondStatus
+        .UNBONDED;
+        validators[validatorsMap[msg.sender] - 1].isJail = false;
     }
 
     function jailValidator(address consensusAddress)
@@ -205,8 +223,20 @@ contract ValidatorPool is System, IValidator {
         onlyValidatorInValidatorSet(msg.sender)
         onlyOtherValidatorInValidatorSet(consensusAddress, msg.sender)
     {
-        validators[validatorsMap[consensusAddress]].isJail = true;
-        // TODO remove the validator from active validatorset;
+        require(
+            validatorset.currentValidatorSetMap(consensusAddress) > 0,
+            "can't jail non-active validator"
+        );
+        validators[validatorsMap[consensusAddress] - 1].isJail = true;
+        validatorset.jailValidator(consensusAddress); // remove from validator set and deal with rewards.
+        updateBondStatus(consensusAddress, BondStatus.UNBONDING);
+        validatorJailQueue[consensusAddress] =
+            block.timestamp +
+            VALIDATOR_JAIL_PERIOD;
+        validators[validatorsMap[consensusAddress] - 1].stakeAmount -=
+            5 *
+            (10**18);
+        reEvaluateValidator(consensusAddress);
     }
 
     function unJailValidator(address consensusAddress)
@@ -242,6 +272,13 @@ contract ValidatorPool is System, IValidator {
         return
             validators[validatorsMap[consensusAddress] - 1].stakeAmount +
             stakepool.getTotalDelegation(consensusAddress);
+    }
+
+    function updateBondStatus(address consensusAddress, BondStatus b)
+        private
+        onlyInit
+    {
+        validators[validatorsMap[consensusAddress] - 1].bondStatus = b;
     }
 
     function addValidatorToSortedList(Validator memory new_validator) private {

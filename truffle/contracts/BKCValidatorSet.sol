@@ -30,6 +30,9 @@ contract BKCValidatorSet is System, IValidator {
     Validator[] private tmpValidatorSet;
     uint256 public endTime;
 
+    address private _validatorPoolAddress;
+    address private _systemRewardAddress;
+
     ValidatorPool private vldpool;
     SystemReward private systemreward;
 
@@ -46,6 +49,11 @@ contract BKCValidatorSet is System, IValidator {
         _;
     }
 
+    modifier onlyValidatorPoolContract {
+        require(msg.sender == _validatorPoolAddress);
+        _;
+    }
+
     function updateEndTime() private {
         endTime += unbondingPeriod;
     }
@@ -55,6 +63,8 @@ contract BKCValidatorSet is System, IValidator {
         onlyNotInit
     {
         endTime = block.timestamp;
+        _validatorPoolAddress = validatorPoolAddress;
+        _systemRewardAddress = systemRewardAddress;
         vldpool = ValidatorPool(validatorPoolAddress);
         systemreward = SystemReward(systemRewardAddress);
         updateValidatorSet();
@@ -64,6 +74,27 @@ contract BKCValidatorSet is System, IValidator {
 
     function getValidators() public view onlyInit returns (Validator[] memory) {
         return currentValidatorSet;
+    }
+
+    function removeValidator(address consensusAddress) private onlyInit {
+        uint256 index = currentValidatorSetMap[consensusAddress] - 1;
+        for (uint256 i = index; i < number_of_validators - 1; i++) {
+            currentValidatorSet[i] = currentValidatorSet[i + 1]; // shift left
+            Validator memory v = currentValidatorSet[i];
+            currentValidatorSetMap[v.consensusAddress] = i + 1;
+        }
+        currentValidatorSet.pop();
+        delete currentValidatorSetMap[consensusAddress];
+        number_of_validators -= 1;
+    }
+
+    function jailValidator(address consensusAddress)
+        external
+        onlyInit
+        onlyValidatorPoolContract
+    {
+        removeValidator(consensusAddress);
+        systemreward.AllocateJailValidatorReward(consensusAddress);
     }
 
     // need to add onlyAfterEndTime here as modifier
@@ -104,7 +135,8 @@ contract BKCValidatorSet is System, IValidator {
             uint256 max_power = 0;
             uint256 max_index = 0;
             for (uint256 j = 0; j < len; j++) {
-                if (powers[j] > max_power && !alreadyIn[j]) {
+                (, , , bool Jail) = vldpool.validators(j);
+                if (powers[j] > max_power && !alreadyIn[j] && !Jail) {
                     max_power = powers[j];
                     max_index = j;
                 }

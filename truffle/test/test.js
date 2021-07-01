@@ -55,8 +55,14 @@ function printValidator(v) {
       " stakeAmount: " +
       v[1] / Math.pow(10, 18) +
       " bond status: " +
-      BondStatusMap[v[2]]
+      BondStatusMap[v[2]] +
+      " isJail: " +
+      v[3]
   );
+}
+
+async function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function printUserUnDelegateQueue() {
@@ -119,11 +125,27 @@ async function printState() {
     for (var i = 0; i < validators.length; i++) {
       try {
         const v = await ValidatorPoolInstance.validators.call(i);
-        if (v[2] == BondStatus.UNBONDING) {
+        if (v[2] == BondStatus.UNBONDING && !v[3]) {
+          // not jail
           printValidator(v);
           const queue = await ValidatorPoolInstance.validatorUnBondQueue(v[0]);
           console.log(
             "will finish unbonding at: " +
+              new Date(queue.toNumber() * 1000).toLocaleString()
+          );
+        }
+      } catch (err) {}
+    }
+    console.log(colors.red("\nValidators in Validator Jail Queue"));
+    for (var i = 0; i < validators.length; i++) {
+      try {
+        const v = await ValidatorPoolInstance.validators.call(i);
+        if (v[3]) {
+          // Jail
+          printValidator(v);
+          const queue = await ValidatorPoolInstance.validatorJailQueue(v[0]);
+          console.log(
+            "will finish jailing at: " +
               new Date(queue.toNumber() * 1000).toLocaleString()
           );
         }
@@ -428,7 +450,7 @@ contract("All Contracts", (accounts) => {
 
   it("validator can top-up : validator 0 do top up 16e18 [10e18, 20e18, 25e18, 22e18, 50e18] => [26e18, 20e18, 25e18, 22e18, 50e18]", async () => {
     await printState();
-    ValidatorPoolInstance.validatorTopUp({
+    await ValidatorPoolInstance.validatorTopUp({
       from: validators[0],
       value: 16e18,
     });
@@ -459,6 +481,39 @@ contract("All Contracts", (accounts) => {
       26e18,
       "the second validator now should be the just-top-up validator"
     );
+  });
+
+  it("the unbonding validator is in the validatorUnBondQueue", async () => {
+    await printState();
+    const queue = await ValidatorPoolInstance.validatorUnBondQueue.call(
+      validators[2]
+    );
+    var now = new Date();
+    var tomorrow = new Date();
+
+    assert.equal(
+      Math.floor(now / 1000) < queue,
+      true,
+      "the queue should be set for 1 day after"
+    );
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    assert.equal(
+      Math.floor(tomorrow / 1000) > queue,
+      true,
+      "it must be able to dequeue the validator tomorrow"
+    );
+  });
+
+  it("still can't dequeue the unbonding validator now", async () => {
+    await printState();
+    try {
+      await ValidatorPoolInstance.removeUnBondingValidatorFromQueue({
+        from: validators[2],
+      });
+      assert.fail();
+    } catch (err) {
+      assert.ok(err.toString().includes("unbonding still in progress"));
+    }
   });
 
   it("after the update of the validator set : validator 2's bondStatus must be unbonding ", async () => {
@@ -634,39 +689,6 @@ contract("All Contracts", (accounts) => {
       5,
       "the number of validators in the pool must be 5"
     );
-  });
-
-  it("the unbonding validator is in the validatorUnBondQueue", async () => {
-    await printState();
-    const queue = await ValidatorPoolInstance.validatorUnBondQueue.call(
-      validators[2]
-    );
-    var now = new Date();
-    var tomorrow = new Date();
-
-    assert.equal(
-      Math.floor(now / 1000) < queue,
-      true,
-      "the queue should be set for 1 day after"
-    );
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    assert.equal(
-      Math.floor(tomorrow / 1000) > queue,
-      true,
-      "it must be able to dequeue the validator tomorrow"
-    );
-  });
-
-  it("still can't dequeue the unbonding validator now", async () => {
-    await printState();
-    try {
-      await ValidatorPoolInstance.removeUnBondingValidatorFromQueue({
-        from: validators[2],
-      });
-      assert.fail();
-    } catch (err) {
-      assert.ok(err.toString().includes("unbonding still in progress"));
-    }
   });
 
   // delegation
@@ -1029,7 +1051,154 @@ contract("All Contracts", (accounts) => {
     assert.equal(reward, 0, "the reward must now be 0");
   });
 
+  it("should able to dequeue the unbonding validator now", async () => {
+    await printState();
+    await ValidatorPoolInstance.removeUnBondingValidatorFromQueue({
+      from: validators[2],
+    });
+  });
+
   // jail
+  it("can't jail non-active validators", async () => {
+    await printState();
+    try {
+      await ValidatorPoolInstance.jailValidator(validators[2], {
+        from: validators[1],
+      });
+      assert.fail();
+    } catch (err) {
+      assert.ok(err.toString().includes("can't jail non-active validator"));
+    }
+  });
+
+  it("add reward to imitate jailing : 100 ether added to validator1 map", async () => {
+    await printState();
+    await SystemRewardInstance.addReward(validators[1], {
+      from: accounts[19],
+      value: 100e18,
+    });
+  });
+
+  it("an active validator can only be jailed from another validator and after consensus", async () => {
+    await printState();
+    await ValidatorPoolInstance.jailValidator(validators[1], {
+      from: validators[4],
+    });
+  }); // ????
+
+  it("validator can't unbond itself when jailed", async () => {
+    try {
+      await ValidatorPoolInstance.removeUnBondingValidatorFromQueue({
+        from: validators[1],
+      });
+      assert.fail();
+    } catch (err) {
+      assert.ok(
+        err
+          .toString()
+          .includes(
+            "can't unbond, validator is jailed, also the validator should not be in the unbonding queue"
+          )
+      );
+    }
+  });
+
+  it("jailed validator can't get any reward (reward go to 0 first) : validator 1 is jailed, hence validator1's reward will be 0", async () => {
+    await printState();
+    const reward1 = await SystemRewardInstance.rewardMapping.call(
+      validators[1]
+    );
+    assert.equal(reward1, 0, "the reward should be 0 ether");
+  });
+
+  it("the jailed validator's reward will then be distributed among other validators and the system itself at rate 90:10", async () => {
+    await printState();
+    const reward4 = await SystemRewardInstance.rewardMapping.call(
+      validators[4]
+    );
+    assert.equal(reward4, 81e18, "the reward should be 81 ether");
+  });
+
+  it("the jailed validator is penalized 5e18, and is removed from the validator set", async () => {
+    const index =
+      (await ValidatorPoolInstance.validatorsMap.call(validators[1])) - 1;
+    const v = await ValidatorPoolInstance.validators.call(index);
+    assert.equal(v[1], 55e18, "the balance is deducted by 5 ether");
+    const val = await BKCValidatorSetInstance.currentValidatorSetMap.call(
+      validators[1]
+    );
+    assert.equal(
+      val,
+      0,
+      "the jailed validator must not be in the validator set"
+    );
+  });
+
+  it("already jailed validator can't become active for 2 days(in the test for 10 seconds) : update validator set, (4,3) not (4,1)", async () => {
+    await printState();
+    await BKCValidatorSetInstance.updateValidatorSet({ from: validators[0] });
+    const v1 = await BKCValidatorSetInstance.currentValidatorSet.call(0);
+    assert.equal(
+      v1[0],
+      validators[4],
+      "the first validator must be validator 4"
+    );
+    const v2 = await BKCValidatorSetInstance.currentValidatorSet.call(1);
+    assert.equal(
+      v2[0],
+      validators[3],
+      "the second validator must be validator 3"
+    );
+  });
+
+  // this also implies that delegating to a jailed validator is not possible, and withdrawal or topping-up are also not possible
+  it("validator bonding status is UNBONDING but not in the validatorUnbondQueue", async () => {
+    await printState();
+    const queue = await ValidatorPoolInstance.validatorUnBondQueue.call(
+      validators[1]
+    );
+    console.log(new Date(queue.toNumber() * 1000).toLocaleString());
+    assert.equal(
+      queue,
+      0,
+      "the validator must not be in the unbond queue (the time should be 0)"
+    );
+    const index =
+      (await ValidatorPoolInstance.validatorsMap.call(validators[1])) - 1;
+    const v = await ValidatorPoolInstance.validators.call(index);
+    assert.equal(
+      v[2],
+      BondStatus.UNBONDING,
+      "the bonding status should be unbonding"
+    );
+  });
+
+  it("the jailed validator can't receive any further reward : try to add reward 10 ether to validator1 reward map", async () => {
+    try {
+      await SystemRewardInstance.addReward(validators[1], {
+        from: validators[19],
+        value: 10e18,
+      });
+      assert.fail();
+    } catch (err) {
+      assert.ok(
+        err.toString().includes("can't add reward to a non-active validator")
+      );
+    }
+  });
+
+  it("validator can unjail itself out of the validatorJailQueue after the period : validator1 unjail itself after 10 seconds of waiting", async () => {
+    await printState();
+    await sleep(10 * 1000); // 10 seconds
+    await ValidatorPoolInstance.removeJailValidatorFromQueue({
+      from: validators[1],
+    });
+    const index =
+      (await ValidatorPoolInstance.validatorsMap.call(validators[1])) - 1;
+    const v = await ValidatorPoolInstance.validators.call(index);
+    assert.equal(v[3], false, "the jail status should be false"); // not jail
+    assert.equal(v[2], BondStatus.UNBONDED, ""); // not unbonding
+  });
 
   it("ends", async () => {
     await printState();

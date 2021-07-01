@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity <=0.8.6;
 
 import "./System.sol";
@@ -37,7 +38,7 @@ contract ValidatorPool is System, IValidator {
     ) {
         require(
             consensusAddress != validatorAddress,
-            "only other validators can prove your innocence"
+            "only other validators can do this operation"
         );
         _;
     }

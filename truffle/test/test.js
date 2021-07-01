@@ -1071,6 +1071,39 @@ contract("All Contracts", (accounts) => {
     }
   });
 
+  it("only active validators can jail other validators : delegator3 try to jail validator4, validator2 try to jail validator1", async () => {
+    await printState();
+    try {
+      await ValidatorPoolInstance.jailValidator(validators[4], {
+        from: delegators[3],
+      });
+      assert.fail();
+    } catch (err) {
+      assert.ok(err.toString().includes("not allow for non-active validator"));
+    }
+    try {
+      await ValidatorPoolInstance.jailValidator(validators[1], {
+        from: validators[2],
+      });
+      assert.fail();
+    } catch (err) {
+      assert.ok(err.toString().includes("not allow for non-active validator"));
+    }
+  });
+
+  it("validator can't jail itself : validator1 try to jail itself", async () => {
+    try {
+      await ValidatorPoolInstance.jailValidator(validators[1], {
+        from: validators[1],
+      });
+      assert.fail();
+    } catch (err) {
+      assert.ok(
+        err.toString().includes("only other validators can do this operation")
+      );
+    }
+  });
+
   it("add reward to imitate jailing : 100 ether added to validator1 map", async () => {
     await printState();
     await SystemRewardInstance.addReward(validators[1], {
@@ -1120,6 +1153,7 @@ contract("All Contracts", (accounts) => {
   });
 
   it("the jailed validator is penalized 5e18, and is removed from the validator set", async () => {
+    await printState();
     const index =
       (await ValidatorPoolInstance.validatorsMap.call(validators[1])) - 1;
     const v = await ValidatorPoolInstance.validators.call(index);
@@ -1174,6 +1208,7 @@ contract("All Contracts", (accounts) => {
   });
 
   it("the jailed validator can't receive any further reward : try to add reward 10 ether to validator1 reward map", async () => {
+    await printState();
     try {
       await SystemRewardInstance.addReward(validators[1], {
         from: validators[19],

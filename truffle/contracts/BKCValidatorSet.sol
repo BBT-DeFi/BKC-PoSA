@@ -136,8 +136,11 @@ contract BKCValidatorSet is System, IValidator {
             uint256 max_power = 0;
             uint256 max_index = 0;
             for (uint256 j = 0; j < len; j++) {
-                (, , , bool Jail) = vldpool.validators(j);
-                if (powers[j] > max_power && !alreadyIn[j] && !Jail) {
+                (address a, , , bool Jail) = vldpool.validators(j);
+                uint256 time = vldpool.validatorRemoveQueue(a); // time is 0 not in queue
+                if (
+                    powers[j] > max_power && !alreadyIn[j] && !Jail && time == 0
+                ) {
                     max_power = powers[j];
                     max_index = j;
                 }

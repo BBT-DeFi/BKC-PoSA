@@ -20,9 +20,26 @@ contract ValidatorPool is System, IValidator {
 
     uint256 constant MIN_VALIDATOR_STAKE_AMOUNT = 10 ether; //10000 * (10**18); // 10000 KUB
 
+    address constant ADMIN = 0x090fb1c3d66303358806836DF2B5b44fcd3e582f; // account 18
+
     mapping(address => uint256) public validatorUnBondQueue;
 
     mapping(address => uint256) public validatorJailQueue;
+
+    mapping(address => uint256) public validatorRemoveQueue;
+
+    modifier onlyAdmin() {
+        require(msg.sender == ADMIN, "admin only");
+        _;
+    }
+
+    modifier onlyValidator() {
+        require(
+            validatorsMap[msg.sender] > 0,
+            "only validators can call this function"
+        );
+        _;
+    }
 
     modifier onlyValidatorInValidatorSet(address consensusAddress) {
         require(
@@ -193,7 +210,7 @@ contract ValidatorPool is System, IValidator {
             unbondingPeriod;
     }
 
-    function removeUnBondingValidatorFromQueue() public onlyInit {
+    function removeUnBondingValidatorFromQueue() public onlyInit onlyValidator {
         require(
             block.timestamp > validatorUnBondQueue[msg.sender],
             "unbonding still in progress"
@@ -207,7 +224,7 @@ contract ValidatorPool is System, IValidator {
         .UNBONDED;
     }
 
-    function removeJailValidatorFromQueue() public onlyInit {
+    function removeJailValidatorFromQueue() public onlyInit onlyValidator {
         require(
             block.timestamp > validatorJailQueue[msg.sender],
             "jailing still in progress"
@@ -218,12 +235,34 @@ contract ValidatorPool is System, IValidator {
         validators[validatorsMap[msg.sender] - 1].isJail = false;
     }
 
-    function jailValidator(address consensusAddress)
-        public
-        onlyInit
-        onlyValidatorInValidatorSet(msg.sender)
-        onlyOtherValidatorInValidatorSet(consensusAddress, msg.sender)
-    {
+    function removeRemovingValidatorFromQueue() public onlyInit onlyValidator {
+        require(
+            block.timestamp > validatorRemoveQueue[msg.sender],
+            "removing still in progress"
+        );
+        require(
+            validatorRemoveQueue[msg.sender] > 0,
+            "validator must be in the queue"
+        );
+        delete validatorRemoveQueue[msg.sender];
+        address[] memory delegators = stakepool.getDelegators(msg.sender);
+        for (uint256 i = 0; i < delegators.length; i++) {
+            stakepool.removeDelegation(delegators[i], msg.sender); // return all delegations
+        }
+        payable(msg.sender).transfer(
+            validators[validatorsMap[msg.sender] - 1].stakeAmount
+        ); // returns the fund to the validator
+        uint256 index = validatorsMap[msg.sender] - 1;
+        for (uint256 i = index; i < validators.length - 1; i++) {
+            // remove the validator from pool
+            validators[i] = validators[i + 1]; // shift left
+            validatorsMap[validators[i].consensusAddress] = i + 1;
+        }
+        validators.pop();
+        delete validatorsMap[msg.sender]; // remove the validator from pool
+    }
+
+    function jailValidator(address consensusAddress) public onlyInit onlyAdmin {
         require(
             validatorset.currentValidatorSetMap(consensusAddress) > 0,
             "can't jail non-active validator"
@@ -238,15 +277,6 @@ contract ValidatorPool is System, IValidator {
             5 *
             (10**18);
         reEvaluateValidator(consensusAddress);
-    }
-
-    function unJailValidator(address consensusAddress)
-        public
-        onlyInit
-        onlyValidatorInValidatorSet(msg.sender)
-        onlyOtherValidatorInValidatorSet(consensusAddress, msg.sender)
-    {
-        validators[validatorsMap[consensusAddress]].isJail = false;
     }
 
     function registerValidator() external payable onlyInit {
@@ -385,6 +415,14 @@ contract ValidatorPool is System, IValidator {
             return false;
         }
         return true;
+    }
+
+    function validatorRemove() external onlyInit {
+        require(validatorsMap[msg.sender] > 0, "can only remove a validator");
+        validatorRemoveQueue[msg.sender] =
+            block.timestamp +
+            VALIDATOR_REMOVE_PERIOD; // remove period
+        delete validatorUnBondQueue[msg.sender];
     }
 
     function rePositionValidator(address consensusAddress, bool operation)

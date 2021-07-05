@@ -151,6 +151,22 @@ async function printState() {
         }
       } catch (err) {}
     }
+    console.log(colors.brightRed("\nValidators in Validator Remove Queue"));
+    for (var i = 0; i < validators.length; i++) {
+      try {
+        const v = await ValidatorPoolInstance.validators.call(i);
+        const queue = await ValidatorPoolInstance.validatorRemoveQueue(v[0]);
+        if (queue > 0) {
+          // Jail
+          printValidator(v);
+          const queue = await ValidatorPoolInstance.validatorRemoveQueue(v[0]);
+          console.log(
+            "will finish removing at: " +
+              new Date(queue.toNumber() * 1000).toLocaleString()
+          );
+        }
+      } catch (err) {}
+    }
   }
   async function StakePoolState() {
     console.log(colors.magenta("\nDelegations in Stake Pool"));
@@ -254,6 +270,8 @@ contract("All Contracts", (accounts) => {
   validatorTest4 = accounts[3];
   validatorTest5 = accounts[4];
   validatorTest6 = accounts[10];
+
+  const admin = accounts[18];
 
   validators = [
     validatorTest1,
@@ -911,7 +929,7 @@ contract("All Contracts", (accounts) => {
     );
   });
 
-  it("undelegate from a bonded validator will result in UserUnDelegationQueue with nothing changes to the delegation object : delegator2 undelegates 1e18 from validator1 which is an active validator", async () => {
+  it("undelegation from a bonded validator will result in UserUnDelegationQueue with a slight change to the delegation object : delegator2 undelegates 1e18 from validator1 which is an active validator", async () => {
     await printState();
     await StakePoolInstance.undelegate(validators[1], (1e18).toString(), {
       from: delegators[2],
@@ -919,7 +937,7 @@ contract("All Contracts", (accounts) => {
     await checkDelegation(2, 1, 1e18, 1e18, 2e18);
   });
 
-  it("undelegate from an unbonding validator will result in UserUnDelegationQueue with nothing changes to the delegation object : delegator2 undelegates 1e18 from an unbonding validator3", async () => {
+  it("undelegation from an unbonding validator will result in UserUnDelegationQueue with a slight change to the delegation object : delegator2 undelegates 1e18 from an unbonding validator3", async () => {
     await printState();
     await StakePoolInstance.undelegate(validators[3], (1e18).toString(), {
       from: delegators[2],
@@ -1051,7 +1069,7 @@ contract("All Contracts", (accounts) => {
     assert.equal(reward, 0, "the reward must now be 0");
   });
 
-  it("should able to dequeue the unbonding validator now", async () => {
+  it("should be able to dequeue the unbonding validator now", async () => {
     await printState();
     await ValidatorPoolInstance.removeUnBondingValidatorFromQueue({
       from: validators[2],
@@ -1059,11 +1077,11 @@ contract("All Contracts", (accounts) => {
   });
 
   // jail
-  it("can't jail non-active validators", async () => {
+  it("can't jail non-active validators : admin try to jail non-active validator2", async () => {
     await printState();
     try {
       await ValidatorPoolInstance.jailValidator(validators[2], {
-        from: validators[1],
+        from: admin,
       });
       assert.fail();
     } catch (err) {
@@ -1071,7 +1089,7 @@ contract("All Contracts", (accounts) => {
     }
   });
 
-  it("only active validators can jail other validators : delegator3 try to jail validator4, validator2 try to jail validator1", async () => {
+  it("only admin can jail other validators : delegator3 try to jail validator4, validator2 try to jail validator1", async () => {
     await printState();
     try {
       await ValidatorPoolInstance.jailValidator(validators[4], {
@@ -1079,7 +1097,7 @@ contract("All Contracts", (accounts) => {
       });
       assert.fail();
     } catch (err) {
-      assert.ok(err.toString().includes("not allow for non-active validator"));
+      assert.ok(err.toString().includes("admin only"));
     }
     try {
       await ValidatorPoolInstance.jailValidator(validators[1], {
@@ -1087,20 +1105,7 @@ contract("All Contracts", (accounts) => {
       });
       assert.fail();
     } catch (err) {
-      assert.ok(err.toString().includes("not allow for non-active validator"));
-    }
-  });
-
-  it("validator can't jail itself : validator1 try to jail itself", async () => {
-    try {
-      await ValidatorPoolInstance.jailValidator(validators[1], {
-        from: validators[1],
-      });
-      assert.fail();
-    } catch (err) {
-      assert.ok(
-        err.toString().includes("only other validators can do this operation")
-      );
+      assert.ok(err.toString().includes("admin only"));
     }
   });
 
@@ -1112,14 +1117,15 @@ contract("All Contracts", (accounts) => {
     });
   });
 
-  it("an active validator can only be jailed from another validator and after consensus", async () => {
+  it("an active validator can only be jailed from admin", async () => {
     await printState();
     await ValidatorPoolInstance.jailValidator(validators[1], {
-      from: validators[4],
+      from: admin,
     });
-  }); // ????
+  });
 
-  it("validator can't unbond itself when jailed", async () => {
+  it("validator can't unbond itself when jailed : the jailed validator1 try to unbond itself.", async () => {
+    await printState();
     try {
       await ValidatorPoolInstance.removeUnBondingValidatorFromQueue({
         from: validators[1],
@@ -1220,6 +1226,87 @@ contract("All Contracts", (accounts) => {
         err.toString().includes("can't add reward to a non-active validator")
       );
     }
+  });
+
+  it("validator can exit the pool (needs to wait in validatorRemoveQueue) and will not be included in the validator set ranking next epoch : validator3 remove itself", async () => {
+    await printState();
+    await ValidatorPoolInstance.validatorRemove({ from: validators[3] });
+  });
+
+  it("removing validator is in the validator remove queue : validator 3 is in the validatorRemoveQueue", async () => {
+    await printState();
+    const queue = await ValidatorPoolInstance.validatorRemoveQueue.call(
+      validators[3]
+    );
+    assert.equal(queue > 0, true, "validator must be in the queue");
+    const now = new Date();
+    assert.equal(
+      Math.floor(now / 1000) < queue,
+      true,
+      "the queue should be set for a period"
+    );
+  });
+
+  it("update of the validator set, the validator in the remove queue won't be considered in the process : validator3 is out of the picture : (4,3) => (4,0)", async () => {
+    await BKCValidatorSetInstance.updateValidatorSet({ from: validators[0] });
+    const v1 = await BKCValidatorSetInstance.currentValidatorSet.call(0);
+    assert.equal(
+      v1[0],
+      validators[4],
+      "the first active validator is the same"
+    );
+    const v2 = await BKCValidatorSetInstance.currentValidatorSet.call(1);
+    assert.equal(
+      v2[0],
+      validators[0],
+      "the second active validator must now be validator 0"
+    );
+  });
+
+  it("after the removing period, validator can then actually remove itself from the pool", async () => {
+    await printState();
+    await sleep(10 * 1000); // 10 seconds
+
+    const balanceValidator3Before = await getBalance(validators[3]);
+    const balanceDelegator2Before = await getBalance(delegators[2]);
+    const balanceDelegator1Before = await getBalance(delegators[1]);
+
+    await ValidatorPoolInstance.removeRemovingValidatorFromQueue({
+      from: validators[3],
+    });
+    const index = await ValidatorPoolInstance.validatorsMap.call(validators[3]);
+    const queue = await ValidatorPoolInstance.validatorRemoveQueue.call(
+      validators[3]
+    );
+    const balanceValidator3After = await getBalance(validators[3]);
+    const balanceDelegator2After = await getBalance(delegators[2]);
+    const balanceDelegator1After = await getBalance(delegators[1]);
+
+    assert.equal(
+      queue,
+      0,
+      "validator is removed from the validatorRemoveQueue"
+    );
+    assert.equal(index, 0, "the validator is removed from the pool");
+
+    assert.equal(
+      balanceValidator3After - balanceValidator3Before > 21e18,
+      true,
+      "the validator's fund is returned"
+    );
+    // console.log(balanceValidator3After - balanceValidator3Before);
+    // console.log(balanceDelegator2After - balanceDelegator2Before);
+    // console.log(balanceDelegator1After - balanceDelegator1Before);
+    assert.equal(
+      balanceDelegator2After - balanceDelegator2Before > 49e17,
+      true,
+      "the delegator's fund is returned"
+    );
+    assert.equal(
+      balanceDelegator1After - balanceDelegator1Before > 9e17,
+      true,
+      "the delegator's fund is returned"
+    );
   });
 
   it("validator can unjail itself out of the validatorJailQueue after the period : validator1 unjail itself after 10 seconds of waiting", async () => {

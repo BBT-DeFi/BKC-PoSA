@@ -149,6 +149,16 @@ contract StakePool is System, IValidator, IDelegation {
             );
     }
 
+    function getDelegationAmoountOfEach(
+        address consensusAddress,
+        address delegator
+    ) external view returns (uint256) {
+        return
+            ValidatorDelegation[consensusAddress].delegateAmountOfEach[
+                delegator
+            ];
+    }
+
     function removeDelegation(address delegator, address validator)
         external
         onlyInit
@@ -160,10 +170,10 @@ contract StakePool is System, IValidator, IDelegation {
             address(this).balance >= totalDelegationOfDelegator,
             "not enough fund to return to delegator, for some reason..."
         );
-        require(
-            UserDelegation[delegator].unbondingAmountForEach[validator] == 0,
-            "still have unbonding fund of this validator, which should not be possible"
-        );
+        // require(
+        //     UserDelegation[delegator].unbondingAmountForEach[validator] == 0,
+        //     "still have unbonding fund of this validator, which should not be possible"
+        // );
         payable(delegator).transfer(totalDelegationOfDelegator);
         ValidatorDelegation[validator]
         .totalDelegation -= totalDelegationOfDelegator;
@@ -285,11 +295,11 @@ contract StakePool is System, IValidator, IDelegation {
                 UserDelegation[msg.sender].unbondingAmountForEach[
                     validator
                 ] -= amount;
-                // the delegation for the validator is deducted when the unbonding is finished and user remove it from queue
                 ValidatorDelegation[validator].delegateAmountOfEach[
                     msg.sender
-                ] -= amount;
+                ] -= amount; // remove from the validator's delegation
                 ValidatorDelegation[validator].totalDelegation -= amount;
+                // no need to remove user delegation here because the undelegate only affect power of validator in the pool and not in the active set.
                 //vldpool.rePositionValidator(validator, false); // the same as validator withdraw
             }
         }

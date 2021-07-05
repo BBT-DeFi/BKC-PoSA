@@ -1117,7 +1117,7 @@ contract("All Contracts", (accounts) => {
     });
   });
 
-  it("an active validator can only be jailed from admin", async () => {
+  it("an active validator can only be jailed from admin : validator 1 is jailed by admin", async () => {
     await printState();
     await ValidatorPoolInstance.jailValidator(validators[1], {
       from: admin,

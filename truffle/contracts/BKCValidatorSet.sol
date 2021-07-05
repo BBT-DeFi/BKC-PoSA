@@ -128,7 +128,7 @@ contract BKCValidatorSet is System, IValidator {
         uint256 len = vldpool.NumberOfValidator();
         for (uint256 j = 0; j < len; j++) {
             (address a, , , ) = vldpool.validators(j);
-            uint256 power = vldpool.getTotalPower(a);
+            uint256 power = vldpool.getTotalPowerExcludeUnbonding(a);
             powers.push(power);
             alreadyIn[j] = false;
         }

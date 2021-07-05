@@ -305,6 +305,16 @@ contract ValidatorPool is System, IValidator {
             stakepool.getTotalDelegation(consensusAddress);
     }
 
+    function getTotalPowerExcludeUnbonding(address consensusAddress)
+        public
+        view
+        returns (uint256)
+    {
+        return
+            validators[validatorsMap[consensusAddress] - 1].stakeAmount +
+            stakepool.getTotalDelegationExcludeUnbonding(consensusAddress);
+    }
+
     function updateBondStatus(address consensusAddress, BondStatus b)
         private
         onlyInit

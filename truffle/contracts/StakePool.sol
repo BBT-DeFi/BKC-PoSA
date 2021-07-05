@@ -95,6 +95,34 @@ contract StakePool is System, IValidator, IDelegation {
         return ValidatorDelegation[consensusAddress].totalDelegation;
     }
 
+    function getTotalDelegationExcludeUnbonding(address consensusAddress)
+        public
+        view
+        returns (uint256)
+    {
+        DelegationObject storage DelOb = ValidatorDelegation[consensusAddress];
+        address[] storage delegators = DelOb.delegators;
+        uint256 totalDelegation = ValidatorDelegation[consensusAddress]
+        .totalDelegation;
+        for (uint256 i = 0; i < delegators.length; i++) {
+            address delegator = delegators[i];
+            for (
+                uint256 j = 0;
+                j < UserUnDelegateQueue[delegator].length;
+                j++
+            ) {
+                UnBondingQueueStruct storage unbondStruct = UserUnDelegateQueue[
+                    delegator
+                ][j];
+                uint256 amount = unbondStruct.amount;
+                if (unbondStruct.validator == consensusAddress) {
+                    totalDelegation -= amount;
+                }
+            }
+        }
+        return totalDelegation;
+    }
+
     function getUserDelegationBondedAmount(address consensusAddress)
         public
         view

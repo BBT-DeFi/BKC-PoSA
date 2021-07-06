@@ -54,7 +54,7 @@ func main() {
 
 //----------------------------An example of init() function----------------------------
 func initValidatorPool(client ethclient.Client, valPoolAddr common.Address, valSetAddr common.Address, stakePoolAddr common.Address) (string, error) {
-	privateKey, err := crypto.HexToECDSA("b83eadc6aacc5f29d14a78242f106099895525bab25b01b1999988ff7ceabcf0")
+	privateKey, err := crypto.HexToECDSA("PRIVATE KEY")
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -17,7 +17,9 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
+
 	"github.com/spf13/cobra"
 
 	"github.com/spf13/viper"
@@ -83,3 +85,24 @@ func initConfig() {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 	}
 }
+
+func handleError(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+var consensusAddress string
+var consensusAddress2 string
+var consensusAddress3 string
+var consensusAddress4 string
+var getValidators bool
+var validatormap string
+var alreadyInit bool
+var index int
+var number_of_validators bool
+var endTime bool
+var validators bool
+var balance bool
+var delegatorAddress string
+var exclude bool

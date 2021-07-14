@@ -17,7 +17,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	Init "win/Code/Init"
 	"win/abi/systemreward"
 	ETHclient "win/client"
@@ -27,8 +26,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var balance bool
-
 // systemrewardCmd represents the systemreward command
 var systemrewardCmd = &cobra.Command{
 	Use:   "systemreward",
@@ -36,19 +33,22 @@ var systemrewardCmd = &cobra.Command{
 	Long:  `This contract consists of reward distributing logics`,
 	Run: func(cmd *cobra.Command, args []string) {
 		client, err := ETHclient.Client()
-		if err != nil {
-			log.Fatal(err)
-		}
+		handleError(err)
 
 		name := "system reward"
 
 		//SystemRewardAddress := "0xd5267A4551754F858EFe111073b0fB96d79409b7"
 
 		SystemRewardInstance, err := systemreward.NewSystemreward(common.HexToAddress(SystemRewardAddress), client)
+		handleError(err)
 
 		val, err := cmd.Flags().GetBool("alreadyInit")
+		handleError(err)
 		addr, err := cmd.Flags().GetString("rewardMapping")
+		handleError(err)
 		b, err := cmd.Flags().GetBool("getBalance")
+		handleError(err)
+
 		if val {
 			Init.AlreadyInit(*client, SystemRewardInstance, name)
 		} else if addr != "" {
@@ -82,16 +82,17 @@ func init() {
 
 func GetRewardMapping(instance *systemreward.Systemreward, addr string) {
 	reward, err := instance.RewardMapping(&bind.CallOpts{}, common.HexToAddress(addr))
-	if err != nil {
-		log.Fatal(err)
-	}
+	handleError(err)
+	fmt.Println()
 	fmt.Println("The reward for validator address", addr, "is", reward)
+	fmt.Println()
 }
 
 func GetBalance(instance *systemreward.Systemreward) {
 	bal, err := instance.GetBalance(&bind.CallOpts{})
-	if err != nil {
-		log.Fatal(err)
-	}
+	handleError(err)
+
+	fmt.Println()
 	fmt.Println("The balance of the system reward contract is", bal)
+	fmt.Println()
 }

@@ -37,6 +37,10 @@ contract StakePool is System, IValidator, IDelegation {
         alreadyInit = true;
     }
 
+    function getUnbondingValue(address delegator) external view onlyInit returns(UnBondingQueueStruct[] memory){
+        return UserUnDelegateQueue[delegator];
+    }
+
     function getUnbondingQueueAmount(address delegator)
         external
         onlyInit

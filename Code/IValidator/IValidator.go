@@ -15,8 +15,9 @@ type Validator struct {
 }
 
 func PrintValidator(v Validator) {
+	BondStatus := []string{"BONDED", "UNBONDING", "UNBONDED"}
 	fmt.Println("Consensus Address:", v.ConsensusAddress)
 	fmt.Println("Stake Amount:", v.StakeAmount)
-	fmt.Println("Bond Status:", v.BondStatus)
+	fmt.Println("Bond Status:", BondStatus[v.BondStatus])
 	fmt.Println("Is Jail:", v.IsJail)
 }

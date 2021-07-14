@@ -15,6 +15,7 @@ func AlreadyInit(client ethclient.Client, instance interface {
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Println()
 	fmt.Println("The contract", name+"'s", "AlreadyInit", "field is", alreadyInit)
-
+	fmt.Println()
 }

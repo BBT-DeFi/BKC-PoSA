@@ -17,7 +17,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"math/big"
 	"time"
 	IValidator "win/Code/IValidator"
@@ -30,13 +29,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var alreadyInit bool
-var index int
-var consensusAddress string
-var number_of_validators bool
-var endTime bool
-var validators bool
-
 // validatorsetCmd represents the validatorset command
 var validatorsetCmd = &cobra.Command{
 	Use:   "validatorset",
@@ -45,25 +37,26 @@ var validatorsetCmd = &cobra.Command{
 	the new validator set`,
 	Run: func(cmd *cobra.Command, args []string) {
 		client, err := ETHclient.Client()
-		if err != nil {
-			log.Fatal(err)
-		}
-
+		handleError(err)
 		name := "validator set"
 
 		//BKCValidatorSetAddress := "0x7eA14c6696EB86a9c7C7a8aCbaC4Bd7BFa80F974"
 
 		BKCValidatorSetInstance, err := validatorset.NewValidatorset(common.HexToAddress(BKCValidatorSetAddress), client)
+		handleError(err)
 
 		in, err := cmd.Flags().GetBool("alreadyInit")
+		handleError(err)
 		cu, err := cmd.Flags().GetInt("currentValidatorSet")
+		handleError(err)
 		cumap, err := cmd.Flags().GetString("currentValidatorSetMap")
+		handleError(err)
 		num, err := cmd.Flags().GetBool("numberOfValidators")
+		handleError(err)
 		end, err := cmd.Flags().GetBool("endTime")
+		handleError(err)
 		vl, err := cmd.Flags().GetBool("validators")
-		if err != nil {
-			log.Fatal(err)
-		}
+		handleError(err)
 		if in {
 			Init.AlreadyInit(*client, BKCValidatorSetInstance, name)
 		} else if cu >= 0 {
@@ -75,16 +68,7 @@ var validatorsetCmd = &cobra.Command{
 		} else if end {
 			GetEndTime(BKCValidatorSetInstance)
 		} else if vl {
-			vlds, err := BKCValidatorSetInstance.GetValidators(&bind.CallOpts{})
-			if err != nil {
-				log.Fatal(err)
-			}
-			for i, vld := range vlds {
-				fmt.Println()
-				fmt.Println("active validator", i+1)
-				IValidator.PrintValidator(IValidator.Validator(vld))
-				fmt.Println()
-			}
+			GetActiveValidators(BKCValidatorSetInstance)
 		} else {
 			fmt.Println("please specify the field you want to query")
 		}
@@ -93,7 +77,7 @@ var validatorsetCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(validatorsetCmd)
-	validatorsetCmd.Flags().BoolVarP(&alreadyInit, "alreadyInit", "a", false, "the init status")
+	validatorsetCmd.Flags().BoolVarP(&alreadyInit, "alreadyInit", "i", false, "the init status")
 
 	validatorsetCmd.Flags().IntVarP(&index, "currentValidatorSet", "s", -1, "the current validator set (specify index)")
 
@@ -116,42 +100,60 @@ func init() {
 }
 
 func PrintValue(instance *validatorset.Validatorset, name string, value interface{}) {
-
+	fmt.Println()
 	fmt.Println("The contract's", name, "field is", value)
+	fmt.Println()
 }
 
 func GetValidatorInSet(instance *validatorset.Validatorset, i int) {
 
 	set, err := instance.CurrentValidatorSet(&bind.CallOpts{}, big.NewInt(int64(i)))
 	set = IValidator.Validator(set)
-	if err != nil {
-		log.Fatal(err)
-	}
+	handleError(err)
+	fmt.Println()
 	fmt.Println("Validator in validator set at index", i)
 	IValidator.PrintValidator(set)
+	fmt.Println()
 }
 
 func GetValidatorSetMap(instance *validatorset.Validatorset, addr string) {
 	idx, err := instance.CurrentValidatorSetMap(&bind.CallOpts{}, common.HexToAddress(addr))
-	if err != nil {
-		log.Fatal(err)
+	handleError(err)
+	if idx.Int64() == int64(0) {
+		fmt.Println()
+		fmt.Println("The validator address", addr, "is not in the active set")
+		fmt.Println()
+		return
 	}
+	fmt.Println()
 	fmt.Println("The index (starts at 1) of the validator", addr, "is", idx)
+	fmt.Println()
 }
 
 func GetNumberOfValdiator(instance *validatorset.Validatorset) {
 	n, err := instance.NumberOfValidators(&bind.CallOpts{})
-	if err != nil {
-		log.Fatal(err)
-	}
+	handleError(err)
+	fmt.Println()
 	fmt.Println("There are", n, "validators in the active set")
+	fmt.Println()
 }
 
 func GetEndTime(instance *validatorset.Validatorset) {
 	endtime, err := instance.EndTime(&bind.CallOpts{})
-	if err != nil {
-		log.Fatal(err)
-	}
+	handleError(err)
 	et := time.Unix(int64(endtime.Uint64()), 0)
+	fmt.Println()
 	fmt.Println("The end time for this epoch is", et)
+	fmt.Println()
+}
+
+func GetActiveValidators(instance *validatorset.Validatorset) {
+	vlds, err := instance.GetValidators(&bind.CallOpts{})
+	handleError(err)
+	for i, vld := range vlds {
+		fmt.Println()
+		fmt.Println("active validator", i+1)
+		IValidator.PrintValidator(IValidator.Validator(vld))
+		fmt.Println()
+	}
 }
